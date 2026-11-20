@@ -6,9 +6,9 @@ Proyecto para [DATAMAD 2026](https://datos.comunidad.madrid), el hackathon de da
 
 ### [Busca tu centro en el mapa →](https://jorge-asenjo.github.io/termometro-escolar/)
 
-[![Mapa de los centros públicos de la Comunidad de Madrid al final del curso 2025/26, coloreados por días de calor en horas de clase](docs/captura.jpg)](https://jorge-asenjo.github.io/termometro-escolar/)
+[![Mapa de la Comunidad de Madrid en cuadros de unos 2,5 km, coloreados por el tramo de calor en horas de clase de sus centros públicos](docs/captura.jpg)](https://jorge-asenjo.github.io/termometro-escolar/)
 
-Cada punto es uno de los 2.078 centros públicos en alta con coordenadas. Puedes buscar tu centro, ver en qué tramo de calor está frente al resto y reproducir el curso 2025/26 día a día.
+El mapa es una hoja cuadriculada. Cada cuadro mide unos 2,5 km de lado y lleva el color del tramo de calor más frecuente entre sus centros; va rayado donde la confianza es baja. Al acercarte aparecen uno a uno los 2.078 centros públicos en alta con coordenadas. Puedes buscar tu centro, ver en qué tramo de calor está frente al resto y reproducir el curso 2025/26 día a día.
 
 ## El hallazgo
 
@@ -48,7 +48,7 @@ El umbral de 27 °C es una elección de este análisis para contar días de form
 ## Lo que este análisis no dice
 
 - **Es temperatura exterior, no la del aula.** Sirve para decidir dónde medir y actuar primero, no para afirmar a cuántos grados está una clase.
-- **Madrid capital no tiene ninguna estación de esta red dentro.** Sus centros quedan a una media de 7 km de la más cercana y salen en el mapa con confianza baja, igual que los que están a más de 10 km de una estación.
+- **Madrid capital no tiene ninguna estación de esta red dentro.** Sus centros quedan a una media de 7 km de la más cercana y salen en el mapa con confianza baja (cuadros rayados y puntos huecos), igual que los que están a más de 10 km de una estación.
 - **Dentro de un mismo municipio** las diferencias entre centros son menores que el error de la interpolación. El dato fuerte es la comparación entre zonas.
 - Los alumnos por centro son una estimación (punto 5).
 

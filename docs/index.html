@@ -174,9 +174,15 @@ button:hover { background: #e8eef8; }
 .ranking .dias { font: 800 20px var(--display); font-variant-numeric: tabular-nums; }
 
 .leyenda h3 { font-size: 15px; margin: 0 0 6px; }
-.leyenda ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.leyenda ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 .leyenda li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.leyenda i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+.leyenda i, .mapa-leyenda i { flex: none; width: 16px; height: 16px; border-radius: 2px; }
+.leyenda p { display: flex; align-items: flex-start; gap: 8px; font-size: 14px; margin: 10px 0 0; }
+.leyenda p i { margin-top: 2px; }
+/* Confianza baja: cuadro rayado en el mapa general, punto hueco al acercarse */
+i.rayado { background: repeating-linear-gradient(135deg, var(--t4) 0 2.5px, #f6cdbf 2.5px 5px); }
+i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
+.leyenda i.hueco { margin-left: -4px; }
 .pie { font-size: 13px; color: var(--tinta-suave); margin-top: auto; }
 .pie p { margin: 0 0 6px; }
 
@@ -197,21 +203,46 @@ button:hover { background: #e8eef8; }
 .rep-cuenta { font-size: 14px; color: #c9d4de; }
 .rep-barra { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: #33414f; overflow: hidden; }
 .rep-barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--t3), var(--t5)); }
-.rep-leyenda { grid-column: 1 / -1; display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: center; font-size: 12px; color: #c9d4de; }
+.rep-leyenda { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #c9d4de; }
 .rep-leyenda[hidden] { display: none; }
-.rep-leyenda i { grid-column: 3; grid-row: 1; height: 8px; border-radius: 4px;
+.rep-leyenda i { flex: 1; height: 8px; border-radius: 4px;
   background: linear-gradient(90deg, #c3d3df 0%, var(--t2) 3%, var(--t3) 22%, var(--t4) 44%, var(--t5) 72%, #5a0b2a 100%); }
-.rep-leyenda span:nth-of-type(2) { grid-column: 2; grid-row: 1; }
-.rep-leyenda span:nth-of-type(3) { grid-column: 4; grid-row: 1; }
 .maplibregl-ctrl-attrib { font-size: 11px; }
+
+/* Leyenda sobre el mapa y etiqueta del cuadro bajo el cursor */
+.mapa-leyenda {
+  position: absolute; left: 14px; top: 14px;
+  background: #fff; border: 2px solid var(--tinta); border-radius: 6px; box-shadow: 3px 3px 0 var(--tinta);
+  padding: 8px 10px; font-size: 13px; line-height: 1.2; display: grid; gap: 6px;
+}
+.mapa-leyenda div { display: flex; align-items: center; gap: 3px; }
+.mapa-leyenda span:first-child { margin-right: 4px; }
+.mapa-leyenda span:last-child { margin-left: 4px; }
+.mapa-leyenda i { width: 15px; height: 15px; }
+.mapa-zona.curso .ml-tramos, .mapa-zona:not(.cerca) .ml-cerca, .mapa-zona.cerca .ml-lejos { display: none; }
+.mapa-zona.cerca .ml-tramos i { border-radius: 50%; }
+.cuadro-info {
+  position: absolute; z-index: 3; pointer-events: none; width: max-content; max-width: 250px;
+  background: var(--tinta); color: #fff; border-radius: 6px; padding: 8px 11px; font-size: 13px; line-height: 1.35;
+}
+.cuadro-info[hidden] { display: none; }
+.cuadro-info b { display: block; font-size: 14px; }
+.cuadro-info ul { list-style: none; margin: 4px 0 0; padding: 0; }
+.cuadro-info li { display: flex; align-items: center; gap: 7px; }
+.cuadro-info li i { flex: none; width: 10px; height: 10px; border-radius: 2px; }
+.cuadro-info em { display: block; font-style: normal; color: #c9d4de; margin-top: 4px; }
 
 @media (max-width: 860px) {
   body { display: flex; flex-direction: column; height: auto; overflow: auto; }
-  .mapa-zona { order: -1; height: 58vh; flex: none; }
+  .mapa-zona { order: -1; flex: none; }
+  #mapa { position: relative; height: 58vh; }
   .panel { border-right: 0; padding: 20px 16px 24px; overflow: visible; }
   h1 { font-size: 36px; }
-  .reproductor { bottom: 12px; grid-template-columns: 1fr; }
+  /* en móvil el reproductor va debajo del mapa, para no tapar el sur */
+  .reproductor { position: static; transform: none; width: 100%; border-radius: 0; box-shadow: none; grid-template-columns: 1fr; }
   .reproductor button { width: 100%; }
+  .mapa-leyenda { left: 10px; top: 10px; padding: 6px 8px; font-size: 12px; gap: 5px; }
+  .mapa-leyenda i { width: 13px; height: 13px; }
   .cifra b { font-size: 64px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -256,6 +287,7 @@ button:hover { background: #e8eef8; }
       <li><i style="background:var(--t2)"></i>Bajo</li>
       <li><i style="background:var(--t1)"></i>El 20&nbsp;% más fresco</li>
     </ol>
+    <p><i class="rayado"></i><i class="hueco"></i><span>Rayado, o punto hueco al acercarte: confianza baja, porque la estación más cercana queda lejos. Es el caso de Madrid capital.</span></p>
   </section>
 
   <footer class="pie">
@@ -265,7 +297,13 @@ button:hover { background: #e8eef8; }
 </main>
 
 <div class="mapa-zona">
-  <div id="mapa" role="region" aria-label="Mapa de centros públicos coloreados por calor en horas de clase"></div>
+  <div id="mapa" role="region" aria-label="Mapa de la Comunidad de Madrid en cuadros de unos 2,5 km, coloreados por el calor en horas de clase de sus centros públicos"></div>
+  <div class="mapa-leyenda" aria-hidden="true">
+    <div class="ml-tramos"><span>Más fresco</span><i style="background:var(--t1)"></i><i style="background:var(--t2)"></i><i style="background:var(--t3)"></i><i style="background:var(--t4)"></i><i style="background:var(--t5)"></i><span>Más calor</span></div>
+    <div class="ml-lejos"><i class="rayado"></i><span>Rayado: confianza baja</span></div>
+    <div class="ml-cerca"><i class="hueco"></i><span>Hueco: confianza baja</span></div>
+  </div>
+  <div class="cuadro-info" id="cuadro-info" hidden></div>
   <div class="reproductor" id="reproductor">
     <button id="play" type="button">Ver el curso 2025/26</button>
     <div class="rep-texto">
@@ -273,7 +311,7 @@ button:hover { background: #e8eef8; }
       <span class="rep-cuenta" id="rep-cuenta">El mapa se calienta día a día de clase</span>
     </div>
     <div class="rep-barra" aria-hidden="true"><i id="rep-barra"></i></div>
-    <div class="rep-leyenda" id="rep-leyenda" hidden><span>Días de calor acumulados</span><i></i><span>0</span><span>36</span></div>
+    <div class="rep-leyenda" id="rep-leyenda" hidden><span>Días de calor acumulados</span><span>0</span><i></i><span>36</span></div>
   </div>
 </div>
 
@@ -307,59 +345,236 @@ button:hover { background: #e8eef8; }
   const porId = new Map(centros.map(c => [c.id, c]));
   const nombreCurso = k => `${String(k).slice(2)}/${String(k + 1).slice(2)}`;
 
+  // ---------- la hoja cuadriculada
+  // A escala regional el mapa es una hoja de cuaderno con cuadros de unos 2,5 km de lado. Cada cuadro lleva el
+  // color del tramo más frecuente entre sus centros (si empatan, el de más calor) y va rayado si al menos la
+  // mitad tiene confianza baja. No calcula nada nuevo: pinta los mismos tramos, sin fingir más detalle.
+  const R = 6378137, RAD = Math.PI / 180;
+  const mx = lon => R * lon * RAD, my = lat => R * Math.log(Math.tan(Math.PI / 4 + lat * RAD / 2));
+  const lonDe = x => x / R / RAD, latDe = y => (2 * Math.atan(Math.exp(y / R)) - Math.PI / 2) / RAD;
+  const LADO = 2500 / Math.cos(40.4 * RAD);   // 2,5 km sobre el terreno, en metros de la proyección
+  for (const c of centros) { c.cx = Math.floor(mx(c.lon) / LADO); c.cy = Math.floor(my(c.lat) / LADO); }
+  const CX0 = Math.min(...centros.map(c => c.cx)) - 1, CX1 = Math.max(...centros.map(c => c.cx)) + 1,
+        CY0 = Math.min(...centros.map(c => c.cy)) - 1, CY1 = Math.max(...centros.map(c => c.cy)) + 1;
+  const PX = 30, PASO = 12, TRAZO = 4.2;      // píxeles por cuadro en el lienzo; separación y grosor del rayado
+  const lienzo = document.createElement('canvas');
+  lienzo.width = (CX1 - CX0 + 1) * PX; lienzo.height = (CY1 - CY0 + 1) * PX;
+  const ctx = lienzo.getContext('2d');
+
+  let grupo = 'todos', cuadros = new Map(), diaPintado = null, entrada = 1;
+  function agrupar() {
+    cuadros = new Map();
+    for (const c of centros) {
+      if (grupo !== 'todos' && c.grupo !== grupo) continue;
+      const k = c.cx + ',' + c.cy;
+      let q = cuadros.get(k);
+      if (!q) cuadros.set(k, q = { cx: c.cx, cy: c.cy, centros: [], porTramo: [0, 0, 0, 0, 0], media: new Float32Array(nd) });
+      q.centros.push(c); q.porTramo[c.tramo - 1]++;
+    }
+    for (const q of cuadros.values()) {
+      q.tramo = 1;
+      for (let t = 2; t <= 5; t++) if (q.porTramo[t - 1] >= q.porTramo[q.tramo - 1]) q.tramo = t;
+      q.baja = q.centros.filter(c => c.confianza === 'baja').length * 2 >= q.centros.length;
+      for (let d = 0; d < nd; d++) { let s = 0; for (const c of q.centros) s += c.acum[d]; q.media[d] = s / q.centros.length; }
+    }
+  }
+  const rgb = h => [1, 3, 5].map(j => parseInt(h.substr(j, 2), 16));
+  const ESCALA_DIAS = [[0, '#c3d3df'], [1, COLORES[1]], [8, COLORES[2]], [16, COLORES[3]], [26, COLORES[4]], [36, '#5a0b2a']];
+  function colorDias(v) {
+    let j = 1; while (j < ESCALA_DIAS.length - 1 && v > ESCALA_DIAS[j][0]) j++;
+    const [v0, c0] = ESCALA_DIAS[j - 1], [v1, c1] = ESCALA_DIAS[j], t = Math.max(0, Math.min(1, (v - v0) / (v1 - v0)));
+    const a = rgb(c0), b = rgb(c1);
+    return `rgb(${a.map((x, k) => Math.round(x + (b[k] - x) * t)).join(',')})`;
+  }
+  function dibujar() {
+    ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+    const lado = PX - 2;
+    for (const q of cuadros.values()) {
+      // al abrir la página los tramos entran del más fresco al más caluroso
+      const alfa = diaPintado == null ? Math.max(0, Math.min(1, entrada * 2.6 - (q.tramo - 1) * .4)) : 1;
+      if (alfa <= 0) continue;
+      const x = (q.cx - CX0) * PX + 1, y = (CY1 - q.cy) * PX + 1;
+      const color = diaPintado == null ? COLORES[q.tramo - 1] : colorDias(q.media[diaPintado]);
+      ctx.fillStyle = ctx.strokeStyle = color;
+      if (!q.baja) { ctx.globalAlpha = alfa; ctx.fillRect(x, y, lado, lado); continue; }
+      ctx.save();
+      ctx.beginPath(); ctx.rect(x, y, lado, lado); ctx.clip();
+      ctx.globalAlpha = alfa * .3; ctx.fillRect(x, y, lado, lado);
+      ctx.globalAlpha = alfa; ctx.lineWidth = TRAZO;
+      ctx.beginPath();
+      for (let k = Math.ceil((x + y) / PASO) * PASO; k < x + y + 2 * lado + TRAZO; k += PASO) { ctx.moveTo(k - y + TRAZO, y - TRAZO); ctx.lineTo(k - y - lado - TRAZO, y + lado + TRAZO); }
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+    const s = mapa.getSource('cuadros');
+    if (s) { s.play(); s.pause(); mapa.triggerRepaint(); }
+  }
+  const cuadroEn = ll => cuadros.get(Math.floor(mx(ll.lng) / LADO) + ',' + Math.floor(my(ll.lat) / LADO));
+
   // Una sola carga de datos: cada día del curso es una propiedad (a0, a1...) y la animación solo cambia el color
   function geojson() {
     return {
       type: 'FeatureCollection',
       features: centros.map(c => {
-        const p = { id: c.id, tramo: c.tramo, grupo: c.grupo, alumnos: c.alumnos };
+        const p = { id: c.id, tramo: c.tramo, grupo: c.grupo, alumnos: c.alumnos, baja: c.confianza === 'baja' };
         for (let d = 0; d < nd; d++) p['a' + d] = c.acum[d];
         return { type: 'Feature', id: c.i, geometry: { type: 'Point', coordinates: [c.lon, c.lat] }, properties: p };
       })
     };
   }
+  // Las líneas del papel, alineadas con los cuadros
+  function pauta() {
+    const O = -6.4, E = -1.2, S = 38.7, N = 42.3, lineas = [];
+    for (let i = Math.ceil(mx(O) / LADO); i * LADO < mx(E); i++) lineas.push([[lonDe(i * LADO), S], [lonDe(i * LADO), N]]);
+    for (let j = Math.ceil(my(S) / LADO); j * LADO < my(N); j++) lineas.push([[O, latDe(j * LADO)], [E, latDe(j * LADO)]]);
+    return { type: 'Feature', geometry: { type: 'MultiLineString', coordinates: lineas }, properties: {} };
+  }
+  // El mapa base, con los colores del cuaderno: papel, tinta y azul de boli
+  function cuaderno(estilo) {
+    const tinta = '#18222d', suave = '#556575', capas = [];
+    for (const l of estilo.layers) {
+      if (/shield|label_country|label_state|ice_shelf|glacier/.test(l.id)) continue;
+      const p = l.paint = { ...l.paint }, sl = l['source-layer'];
+      if (l.id === 'background') p['background-color'] = '#f3f6f8';
+      else if (l.id === 'park') { p['fill-color'] = '#dfeadf'; p['fill-opacity'] = .6; }
+      else if (l.id === 'water') p['fill-color'] = '#bfd8ea';
+      else if (l.id === 'waterway') p['line-color'] = '#a9c9df';
+      else if (l.id === 'landuse_residential') p['fill-color'] = '#e9eef3';
+      else if (l.id === 'landcover_wood') p['fill-color'] = '#e0eadf';
+      else if (l.id === 'building') { p['fill-color'] = '#e6ebf0'; p['fill-outline-color'] = '#d5dde6'; }
+      else if (l.type === 'line' && sl === 'transportation') {
+        p['line-color'] = /casing/.test(l.id) ? '#c6d1dc' : /subtle/.test(l.id) ? 'rgba(85,101,117,.2)' : /inner|dashline/.test(l.id) ? '#ffffff' : '#dfe6ed';
+      }
+      else if (sl === 'boundary') p['line-color'] = 'rgba(85,101,117,.35)';
+      else if (l.type === 'symbol') {
+        if (sl !== 'water_name' && sl !== 'waterway') p['text-color'] = sl === 'place' && l.id !== 'label_other' ? tinta : suave;
+        p['text-halo-color'] = 'rgba(243,246,248,.92)'; p['text-halo-width'] = 1.4;
+      }
+      capas.push(l);
+      if (l.id === 'boundary_3') capas.push({
+        id: 'limite-region', type: 'line', source: l.source, 'source-layer': 'boundary',
+        filter: ['all', ['==', ['get', 'admin_level'], 4], ['!=', ['get', 'maritime'], 1]],
+        paint: { 'line-color': suave, 'line-width': ['interpolate', ['linear'], ['zoom'], 7, 1.2, 11, 2], 'line-dasharray': [3, 2] }
+      });
+    }
+    return { ...estilo, layers: capas };
+  }
 
+  // La vista inicial encuadra todos los cuadros y deja sitio a la leyenda y al reproductor
+  const REGION = [[lonDe(CX0 * LADO), latDe(CY0 * LADO)], [lonDe((CX1 + 1) * LADO), latDe((CY1 + 1) * LADO)]];
+  const MARGEN = matchMedia('(max-width: 860px)').matches ? { top: 56, bottom: 4, left: 4, right: 4 } : { top: 10, bottom: 100, left: 10, right: 10 };
   const mapa = new maplibregl.Map({
     container: 'mapa',
-    style: 'https://tiles.openfreemap.org/styles/positron',
-    bounds: [[-4.32, 40.08], [-3.12, 41.02]],
-    fitBoundsOptions: { padding: 30 },
+    bounds: REGION,
+    fitBoundsOptions: { padding: MARGEN },
+    maxBounds: [[-6.2, 38.9], [-1.4, 42.1]],
     attributionControl: { compact: true }
   });
+  mapa.setStyle('https://tiles.openfreemap.org/styles/positron', { transformStyle: (_, estilo) => cuaderno(estilo) });
   mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
+  // Los centros sueltos aparecen al acercarse; hasta entonces mandan los cuadros
+  const Z_PUNTOS = 9.8, Z_CUADROS = 11.4;
+  const esBaja = ['get', 'baja'];
   const colorTramo = ['match', ['get', 'tramo'], 1, COLORES[0], 2, COLORES[1], 3, COLORES[2], 4, COLORES[3], COLORES[4]];
-  const colorAcum = d => ['interpolate', ['linear'], ['get', 'a' + d], 0, '#c3d3df', 1, COLORES[1], 8, COLORES[2], 16, COLORES[3], 26, COLORES[4], 36, '#5a0b2a'];
-  const REGION = [[-4.32, 40.08], [-3.12, 41.02]];
-  const radio = ['interpolate', ['linear'], ['zoom'], 8, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 2.2, 1500, 5],
-                 12, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 5, 1500, 11], 15, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 8, 1500, 18]];
+  const colorAcum = d => ['interpolate', ['linear'], ['get', 'a' + d], ...ESCALA_DIAS.flat()];
+  const porAlumnos = (a, b) => ['interpolate', ['linear'], ['get', 'alumnos'], 0, a, 1500, b];
+  const TAM = [[8, 2.2, 5], [12, 5, 11], [15, 8, 18]];
+  const porZoom = f => ['interpolate', ['linear'], ['zoom'], ...TAM.flatMap(([z, a, b]) => [z, f(porAlumnos(a, b), z)])];
+  const aparece = v => ['interpolate', ['linear'], ['zoom'], Z_PUNTOS, 0, 11, v];
+  // Confianza baja: punto hueco, con el color solo en el borde
+  function colorPuntos(color) {
+    mapa.setPaintProperty('centros', 'circle-color', ['case', esBaja, '#ffffff', color]);
+    mapa.setPaintProperty('centros', 'circle-stroke-color', ['case', esBaja, color, '#ffffff']);
+  }
 
   mapa.on('load', () => {
+    const antes = mapa.getStyle().layers.find(l => l.type === 'symbol').id;
+    mapa.addSource('pauta', { type: 'geojson', data: pauta() });
+    mapa.addLayer({
+      id: 'pauta', type: 'line', source: 'pauta',
+      paint: { 'line-color': '#d3dee8', 'line-width': 1, 'line-opacity': ['interpolate', ['linear'], ['zoom'], 6.6, 0, 7.2, 1, 10.6, 1, 12, 0] }
+    }, 'park');
+    mapa.addSource('cuadros', {
+      type: 'canvas', canvas: lienzo, animate: false,
+      coordinates: [[lonDe(CX0 * LADO), latDe((CY1 + 1) * LADO)], [lonDe((CX1 + 1) * LADO), latDe((CY1 + 1) * LADO)],
+                    [lonDe((CX1 + 1) * LADO), latDe(CY0 * LADO)], [lonDe(CX0 * LADO), latDe(CY0 * LADO)]]
+    });
+    mapa.addLayer({
+      id: 'cuadros', type: 'raster', source: 'cuadros',
+      paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10.2, .95, Z_CUADROS, 0], 'raster-fade-duration': 0 }
+    }, antes);
     mapa.addSource('centros', { type: 'geojson', data: geojson() });
     mapa.addLayer({
-      id: 'centros', type: 'circle', source: 'centros',
+      id: 'centros-borde', type: 'circle', source: 'centros', minzoom: Z_PUNTOS,
+      paint: { 'circle-color': '#18222d', 'circle-radius': porZoom((r, z) => ['+', r, z < 12 ? 1.1 : 2]), 'circle-opacity': aparece(.45) }
+    });
+    mapa.addLayer({
+      id: 'centros', type: 'circle', source: 'centros', minzoom: Z_PUNTOS,
       paint: {
-        'circle-color': colorTramo, 'circle-radius': radio,
-        'circle-stroke-color': '#ffffff', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 8, .4, 13, 1.2],
-        'circle-opacity': .92
+        'circle-radius': porZoom(r => ['case', esBaja, ['*', .58, r], r]),
+        'circle-stroke-width': porZoom((r, z) => ['case', esBaja, ['+', ['*', .42, r], z < 12 ? .4 : 1.2], z < 12 ? .4 : 1.2]),
+        'circle-opacity': aparece(1), 'circle-stroke-opacity': aparece(1)
       }
     });
+    colorPuntos(colorTramo);
     mapa.addLayer({
       id: 'elegido', type: 'circle', source: 'centros', filter: ['==', ['get', 'id'], ''],
       paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 17, 15, 26], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#18222d', 'circle-stroke-width': 3 }
     });
-    mapa.on('click', 'centros', e => elegir(e.features[0].properties.id, false));
-    mapa.on('mouseenter', 'centros', () => mapa.getCanvas().style.cursor = 'pointer');
-    mapa.on('mouseleave', 'centros', () => mapa.getCanvas().style.cursor = '');
+
     const desdeUrl = new URLSearchParams(location.hash.slice(1)).get('c');
     if (desdeUrl && porId.has(desdeUrl)) elegir(desdeUrl, true);
+    if (reducido || actual) dibujar();
+    else {
+      const t0 = performance.now();
+      (function paso(t) {
+        entrada = Math.min(1, (t - t0) / 1500);
+        dibujar();
+        if (entrada < 1) requestAnimationFrame(paso);
+      })(t0);
+    }
   });
 
+  // Un toque en un cuadro acerca hasta ver sus centros; un toque en un centro abre su ficha
+  const info = document.getElementById('cuadro-info'), zona = document.querySelector('.mapa-zona');
+  const TRAMO_CORTO = ['el 20 % más fresco', 'el tramo bajo', 'el tramo medio', 'el tramo alto', 'el 20 % con más calor'];
+  const hayPuntos = () => mapa.getZoom() >= Z_PUNTOS && mapa.getLayer('centros');
+  const hayCuadros = () => mapa.getZoom() < Z_CUADROS - .4;
+  mapa.on('click', e => {
+    const f = hayPuntos() ? mapa.queryRenderedFeatures(e.point, { layers: ['centros'] })[0] : null;
+    if (f) { elegir(f.properties.id, false); return; }
+    const q = hayCuadros() && cuadroEn(e.lngLat);
+    if (!q) return;
+    info.hidden = true;
+    mapa.fitBounds([[lonDe(q.cx * LADO), latDe(q.cy * LADO)], [lonDe((q.cx + 1) * LADO), latDe((q.cy + 1) * LADO)]],
+      { padding: 40, maxZoom: 12.6, duration: reducido ? 0 : 900 });
+  });
+  mapa.on('mousemove', e => {
+    const sobrePunto = hayPuntos() && mapa.queryRenderedFeatures(e.point, { layers: ['centros'] }).length;
+    const q = !sobrePunto && hayCuadros() && cuadroEn(e.lngLat);
+    mapa.getCanvas().style.cursor = sobrePunto || q ? 'pointer' : '';
+    if (!q || diaPintado != null || !matchMedia('(hover: hover)').matches) { info.hidden = true; return; }
+    const n = q.centros.length;
+    info.innerHTML = `<b>${n} ${n === 1 ? 'centro público' : 'centros públicos'} en este cuadro</b>
+      <ul>${q.porTramo.map((m, t) => m ? `<li><i style="background:${COLORES[t]}"></i>${m} en ${TRAMO_CORTO[t]}</li>` : '').reverse().join('')}</ul>
+      ${q.baja ? '<em>Confianza baja: la estación más cercana queda lejos.</em>' : ''}<em>Pulsa para acercarte y verlos.</em>`;
+    info.hidden = false;
+    info.style.left = Math.min(e.point.x + 16, zona.clientWidth - info.offsetWidth - 8) + 'px';
+    info.style.top = Math.min(e.point.y + 16, zona.clientHeight - info.offsetHeight - 8) + 'px';
+  });
+  mapa.on('zoom', () => zona.classList.toggle('cerca', mapa.getZoom() >= 10.8));
+  mapa.on('mouseout', () => { info.hidden = true; });
+  mapa.on('movestart', () => { info.hidden = true; });
+
   // ---------- filtros
-  let grupo = 'todos';
+  agrupar();
   document.getElementById('filtros').addEventListener('change', e => {
     grupo = e.target.value;
-    mapa.setFilter('centros', grupo === 'todos' ? null : ['==', ['get', 'grupo'], grupo]);
+    const filtro = grupo === 'todos' ? null : ['==', ['get', 'grupo'], grupo];
+    mapa.setFilter('centros', filtro); mapa.setFilter('centros-borde', filtro);
+    agrupar(); dibujar();
     if (!actual) resumen();
   });
 
@@ -374,7 +589,8 @@ button:hover { background: #e8eef8; }
     detalle.innerHTML = `
       <div class="resumen">
         <h2>De ${Math.round(ds[0])} a ${Math.round(ds[ds.length - 1])} días de calor al año, según dónde esté el centro</h2>
-        <p>Cada punto es un centro público; su tamaño, los alumnos que tiene. Estos son los que más días de calor pasan en horas de clase:</p>
+        <p>Cada cuadro del mapa mide unos 2,5 km de lado y lleva el color del tramo más frecuente entre sus centros públicos. Acércate para ver cada centro: el tamaño del punto son sus alumnos estimados.</p>
+        <p>Estos son los que más días de calor pasan en horas de clase:</p>
         <ol class="ranking">${lista.map(c => `
           <li><button type="button" data-id="${c.id}">
             <span>${esc(c.nombre)}<small>${esc(c.tipo)}, ${esc(c.municipio)}</small></span>
@@ -481,7 +697,8 @@ button:hover { background: #e8eef8; }
   const fmtFecha = new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   let timer = null, dia = 0;
   function frame(d) {
-    mapa.setPaintProperty('centros', 'circle-color', colorAcum(d));
+    colorPuntos(colorAcum(d));
+    diaPintado = d; dibujar();
     const f = new Date(datos.dias[d] + 'T12:00:00');
     fechaEl.textContent = fmtFecha.format(f);
     const conCalor = centros.filter(c => c.acum[d] > (d ? c.acum[d - 1] : 0)).length;
@@ -501,14 +718,16 @@ button:hover { background: #e8eef8; }
   play.addEventListener('click', () => {
     if (play.dataset.fin) {
       delete play.dataset.fin; dia = 0;
-      mapa.setPaintProperty('centros', 'circle-color', colorTramo);
+      colorPuntos(colorTramo);
+      diaPintado = null; dibujar(); zona.classList.remove('curso');
       fechaEl.textContent = 'Curso 2025/26'; cuentaEl.textContent = 'El mapa se calienta día a día de clase';
       barra.style.width = '0'; play.textContent = 'Ver el curso 2025/26'; leyendaAcum.hidden = true;
       return;
     }
     if (timer) { parar(false); return; }
-    if (dia === 0) mapa.fitBounds(REGION, { padding: 30, duration: reducido ? 0 : 900 });
-    mapa.setPaintProperty('centros', 'circle-color', colorAcum(dia));
+    if (dia === 0) mapa.fitBounds(REGION, { padding: MARGEN, duration: reducido ? 0 : 900 });
+    colorPuntos(colorAcum(dia));
+    diaPintado = dia; dibujar(); zona.classList.add('curso');
     leyendaAcum.hidden = false;
     play.textContent = 'Pausa';
     const paso = reducido ? 400 : 70;
