@@ -1,0 +1,14 @@
+Centroide medio de la radiación (hora del reloj del fichero; mediodía solar en Madrid ~12:15 UTC):
+mes
+1     12.43
+2     12.52
+3     12.41
+4     12.25
+5     12.17
+6     12.23
+7     12.35
+8     12.33
+9     12.19
+10    12.05
+11    12.06
+12    12.24

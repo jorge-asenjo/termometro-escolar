@@ -1,0 +1,73 @@
+Última fecha con temperatura en 2026.csv: 2026-10-31
+Estaciones con temperatura en el curso: 28 | horas lectivas-hora: 960
+Cobertura media por estación (% horas válidas): 98.9 | mín: 96.4 28065014
+Altitud estaciones: min 360 max 1870
+
+Validación dejando fuera una estación (28 estaciones, horas 9-14 h lectivas 2025/26):
+            rmse_all  rmse_med_est  rmse_sinRascafria  sesgo  mae_horas27  spearman_h27  spearman_gh25  spearman_gh25_sinMajad
+nn              2.26          1.56               1.69   0.42         28.0          0.53           0.59                    0.58
+nn_lapse        1.92          1.60               1.89   0.05         34.0          0.52           0.53                    0.61
+idw             2.08          1.22               1.40   0.38         20.0          0.69           0.71                    0.71
+idw_lapse       1.52          1.06               1.46   0.14         17.0          0.55           0.55                    0.68
+idw5_lapse      1.58          1.21               1.53   0.12         21.0          0.58           0.59                    0.71
+
+Detalle idw_lapse por estación (horas >=27 ºC observadas vs predichas, RMSE ºC):
+     cod  obs27  pred27  obsGH25  predGH25  rmse          estacion_municipio    z
+28080003     68     161    333.6    966.08  3.39                 Majadahonda  360
+28123002    139     126    838.4    714.11  2.66           Rivas Vaciamadrid  608
+28120001      0       0      0.0      3.00  2.63                   Rascafría 1870
+28074007    178     115   1157.8    641.45  2.41                     Leganés  676
+28133002     90     124    460.9    715.06  1.89 San Martín de Valdeiglesias  549
+28092005    176     126   1099.9    724.87  1.82                    Móstoles  660
+28065014    108     153    568.3    907.68  1.69                      Getafe  667
+28148004    163     120   1019.2    677.77  1.65           Torrejón de Ardoz  597
+28180001    128      93    653.9    502.11  1.56       Villarejo de Salvanés  764
+28016001     34      54    152.8    249.99  1.54                   El Atazar  995
+28171001    131     125    744.3    706.10  1.42             Villa del Prado  510
+28047002     86      64    413.9    310.17  1.39            Collado-Villalba  873
+28013002    142     151    863.8    883.80  1.32                    Aranjuez  501
+28115003     96      79    509.0    394.16  1.08          Pozuelo de Alarcón  690
+28058004    155     130    892.3    754.61  1.04                 Fuenlabrada  699
+28045002     47      63    209.4    298.59  0.93              Colmenar Viejo  905
+28014002    109     135    599.4    777.65  0.90             Arganda del Rey  586
+28106001    140     145    868.9    829.76  0.89                       Parla  648
+28049003    108     117    614.3    645.77  0.88                     Coslada  621
+28067001     60      66    273.8    311.56  0.87       Guadalix de la Sierra  853
+28102001     81      96    401.6    511.83  0.84           Orusco del Tajuña  800
+28005002    114     131    612.6    753.90  0.78           Alcalá de Henares  595
+28127004     83      71    424.3    352.72  0.77                   Las Rozas  718
+28007004    122     143    705.0    823.57  0.71                    Alcorcón  693
+28009001     71      84    337.4    420.88  0.67                      Algete  800
+28161001    140     134    836.4    783.87  0.61                   Valdemoro  615
+28134002     91      85    444.7    451.68  0.61  San Sebastián de los Reyes  672
+28006004     76      92    401.9    466.92  0.58                  Alcobendas  688
+
+Centros en el fichero: 7757 | ALTA: 3906
+ALTA con UTM válida: 3851 de 3906
+ALTA por titularidad: {'PÚBLICO': 2078, 'PRIVADO': 1253, 'PRIVADO CONCERTADO': 553, 'PÚBLICO-TITULARIDAD PRIVADA': 22}
+
+Públicos ALTA por tipo (top 12):
+TIPO_ABRV
+CP INF-PRI          718
+EEI                 362
+IES                 345
+EEI-CN              129
+CP INF-PRI-SEC       93
+E MUN.MUSICA         85
+CEPA                 63
+EOEP GENERAL         37
+ZNAS.CN.             35
+E MUN. MUS-DANZA     30
+EOI                  29
+CP EE                27
+Públicos con FECHA CONSTITUCIÓN: 2040 de 2100 | antes de 2006: 1637
+  CP INF-PRI: 718 | con fecha 706 | <2006 644 | Madrid capital 225
+  IES: 345 | con fecha 338 | <2006 297 | Madrid capital 113
+  EEI: 362 | con fecha 355 | <2006 194 | Madrid capital 153
+
+Distancia (km) de centros públicos ALTA a la estación con temperatura más cercana:
+            count  mean  std  min  50%   90%   max
+MUNICIPIO                                         
+False      1418.0   4.4  4.4  0.0  2.3  11.2  21.0
+True        660.0   7.2  2.0  2.4  7.2   9.6  11.1
+Centros públicos en Madrid capital: 669 de 2100

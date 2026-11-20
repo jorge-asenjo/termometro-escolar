@@ -1,0 +1,88 @@
+Filas de temperatura: 65053 · duplicadas estación-fecha: 0
+Días lectivos en la ventana por curso: {2019: 118, 2020: 191, 2021: 190, 2022: 191, 2023: 193, 2024: 192, 2025: 181, 2026: 39}
+
+Curso 2025/26 (8-sep-2025 a 19-jun-2026), T exterior en 9-14 h oficiales:
+     cod                        muni  alt  cobertura  d27  d30   h27
+28092005                    Móstoles  660      0.983   35   24  95.0
+28074007                     Leganés  676      0.967   35   25 100.0
+28058004                 Fuenlabrada  699      0.983   34   18  84.0
+28148004           Torrejón de Ardoz  597      0.939   32   19  86.0
+28123002           Rivas Vaciamadrid  608      0.983   32   16  65.0
+28171001             Villa del Prado  510      0.978   31   13  68.0
+28161001                   Valdemoro  615      0.989   31   17  68.0
+28106001                       Parla  648      0.972   30   18  67.0
+28013002                    Aranjuez  501      0.989   30   17  66.0
+28180001       Villarejo de Salvanés  764      0.983   29   11  57.0
+28007004                    Alcorcón  693      0.994   26   13  60.0
+28005002           Alcalá de Henares  595      0.978   25   12  49.0
+28014002             Arganda del Rey  586      0.972   23   11  47.0
+28065014                      Getafe  667      0.961   23    9  44.0
+28115003          Pozuelo de Alarcón  690      0.989   22    9  42.0
+28049003                     Coslada  621      0.961   21   12  43.0
+28047002            Collado-Villalba  873      0.994   18    6  42.0
+28133002 San Martín de Valdeiglesias  549      0.994   18    8  37.0
+28134002  San Sebastián de los Reyes  672      0.983   18    6  36.0
+28102001           Orusco del Tajuña  800      0.989   18    7  34.0
+28127004                   Las Rozas  718      0.989   17    5  33.0
+28006004                  Alcobendas  688      0.994   16    5  29.0
+28009001                      Algete  800      0.994   14    2  27.0
+28080003                 Majadahonda  360      0.983   14    1  23.0
+28067001       Guadalix de la Sierra  853      0.989   13    1  25.0
+28045002              Colmenar Viejo  905      0.989   12    0  16.0
+28016001                   El Atazar  995      0.978    8    0   9.0
+28120001                   Rascafría 1870      0.994    0    0   0.0
+
+Estaciones válidas (cobertura >= 90 %, sin Puerto de Cotos a 1.870 m): 27
+d27: min 8 · mediana 23.0 · máx 35
+d30: min 0 · mediana 11.0 · máx 25
+h27: min 9.0 · mediana 44.0 · máx 100.0
+
+Serie por curso (estaciones con cobertura >= 90 %, sin Cotos):
+        n  d27_med  d27_min  d27_max  d30_med  h27_med
+curso                                                 
+2020   23     12.0        1       17      5.0     24.0
+2021   23     13.0        6       20      6.0     37.0
+2022   23      7.0        0       20      1.0      9.0
+2023   27     12.0        0       24      4.0     22.0
+2024   25     13.0        6       23      8.0     33.0
+2025   27     23.0        8       35     11.0     44.0
+
+Sesgo medio (°C) frente a la mediana de la red el mismo día (un salto entre cursos indicaría cambio de sensor o de sitio):
+          2020  2021  2022  2023  2024  2025                         muni
+cod                                                                      
+28005002 -0.37 -0.35 -0.22 -0.12 -0.01  0.51            Alcalá de Henares
+28006004 -0.92 -0.83 -1.02 -0.78 -0.86 -0.73                   Alcobendas
+28007004  0.50  0.59  0.48  0.77  0.73  0.69                     Alcorcón
+28009001 -1.97 -1.88 -2.07 -2.00 -1.86 -1.41                       Algete
+28013002  1.28  0.95  1.35  1.08  1.32  1.37                     Aranjuez
+28014002  1.32  0.68  0.20  0.05  0.30  0.31              Arganda del Rey
+28016001 -3.72 -3.48 -3.85 -3.70 -3.88 -3.53                    El Atazar
+28045002 -2.58 -2.53 -2.88 -2.65 -2.63 -2.60               Colmenar Viejo
+28047002 -0.94 -0.38 -1.06 -0.43 -0.97 -0.92             Collado-Villalba
+28049003  0.46  0.41  0.15  0.13  0.27  0.93                      Coslada
+28058004  0.33  1.03  1.49  1.57  1.31  1.39                  Fuenlabrada
+28065014  0.06 -0.01 -0.11  0.03  1.05  0.09                       Getafe
+28067001 -0.89 -0.92 -1.12 -0.71 -1.14 -1.72        Guadalix de la Sierra
+28074007  1.37  1.32  1.45  1.68  1.56  2.65                      Leganés
+28080003 -1.34 -1.32 -1.60 -1.27 -1.31 -1.25                  Majadahonda
+28092005 -0.39 -0.23 -0.48 -0.19  0.78  2.38                     Móstoles
+28102001  0.14 -0.48 -0.44 -0.36 -0.89 -0.96            Orusco del Tajuña
+28106001   NaN   NaN   NaN  0.68  0.87  0.96                        Parla
+28115003   NaN   NaN   NaN  0.01 -0.03  0.03           Pozuelo de Alarcón
+28120001 -8.32 -8.59 -8.89 -7.98 -8.67 -8.84                    Rascafría
+28123002  1.25  1.36  1.72 -0.46 -0.15 -0.47            Rivas Vaciamadrid
+28127004   NaN   NaN   NaN -0.72 -0.74 -0.84                    Las Rozas
+28133002 -0.25 -0.20  0.28  0.80  0.28 -0.84  San Martín de Valdeiglesias
+28134002   NaN   NaN   NaN -0.43 -0.61 -0.50   San Sebastián de los Reyes
+28148004  0.81  1.09  1.73  1.29  1.58  2.18            Torrejón de Ardoz
+28161001  0.81  0.61  1.04  0.93  0.71  0.97                    Valdemoro
+28171001  1.33  1.33  1.14  1.40  1.43  0.70              Villa del Prado
+28180001  1.31  1.14  1.45  1.41  1.09  0.66        Villarejo de Salvanés
+
+Días >= 27 °C por mes (mediana de estaciones):
+curso  2019  2020  2021  2022  2023  2024  2025  2026
+mes                                                  
+5       4.0   1.0   5.0   0.0   2.0   5.0   7.0   NaN
+6       0.0   7.0   9.0   2.0   5.0   9.0  10.0   NaN
+9       NaN   3.0   0.0   2.0   1.0   2.0   6.0   9.0
+10      NaN   0.0   0.0   1.0   3.0   0.0   0.0   0.0
