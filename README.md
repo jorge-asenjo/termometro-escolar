@@ -10,6 +10,8 @@ Proyecto para [DATAMAD 2026](https://datos.comunidad.madrid), el hackathon de da
 
 El mapa es una hoja cuadriculada. Cada cuadro mide unos 2,5 km de lado y lleva el color del tramo de calor más frecuente entre sus centros; va rayado donde la confianza es baja. Al acercarte aparecen uno a uno los 2.078 centros públicos en alta con coordenadas. Puedes buscar tu centro, ver en qué tramo de calor está frente al resto y reproducir el curso 2025/26 día a día.
 
+La primera vez que se abre, los cuadros se levantan de la hoja: cada uno sube tantos días como calor pasan de media sus centros, todos al mismo ritmo. Los de la sierra se paran enseguida y los del sur siguen subiendo. Después se posan y queda el mapa. Las alturas parten de cero y no hay perspectiva, así que un día mide lo mismo en todo el mapa, y los cuadros con confianza baja siguen rayados. La entrada no bloquea nada (cualquier gesto la retira), no se repite a quien vuelve y respeta el ajuste de «reducir movimiento». Para verla otra vez, añade `?entrada` a la dirección.
+
 Cada centro tiene su ficha: los días de calor al año, su tramo, los cinco cursos, el curso 2025/26 día a día y el aviso de confianza. Se puede enviar por WhatsApp, copiar su enlace o guardarla como imagen.
 
 ## El hallazgo

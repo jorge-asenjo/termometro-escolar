@@ -13,8 +13,10 @@
 <meta property="og:image" content="https://jorge-asenjo.github.io/termometro-escolar/captura.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 26'%3E%3Crect x='4' y='1' width='6' height='17' rx='3' fill='white' stroke='%2318222d' stroke-width='2'/%3E%3Ccircle cx='7' cy='20' r='5' fill='%23e2522b'/%3E%3C/svg%3E">
+<link rel="preload" href="centros.json" as="fetch" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <style>
@@ -78,6 +80,7 @@ h1 {
   line-height: .98;
   letter-spacing: -.01em;
   margin: 10px 0 0;
+  text-wrap: balance;
 }
 .entrada { color: var(--tinta-suave); margin: 10px 0 0; max-width: 34ch; }
 
@@ -94,6 +97,20 @@ h1 {
   color: var(--tinta);
 }
 .buscador input::placeholder { color: #8796a5; }
+/* el aspa de borrar, a tinta como el resto */
+.buscador input::-webkit-search-cancel-button {
+  -webkit-appearance: none; appearance: none; width: 22px; height: 22px; margin: 0 -4px 0 8px; cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Cpath d='M6 6l10 10M16 6L6 16' stroke='%2318222d' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+/* La primera vez, un apunte a boli lleva del mapa al buscador */
+.apunte {
+  position: absolute; right: 0; top: -7px; display: flex; align-items: flex-start; gap: 3px;
+  font: 800 20px/1 var(--display); font-stretch: 85%; color: var(--boli); white-space: nowrap;
+  rotate: -3deg; transform-origin: right bottom; pointer-events: none; opacity: 0; transition: opacity .25s ease-out;
+}
+.apunte.puesto { opacity: 1; }
+.apunte svg { flex: none; width: 30px; height: 31px; margin-top: 3px; overflow: visible; }
+.apunte path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
 .resultados {
   position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px);
   margin: 0; padding: 4px; list-style: none;
@@ -120,6 +137,7 @@ h1 {
 }
 .filtros input { position: absolute; opacity: 0; pointer-events: none; }
 .filtros input:checked + span { font-weight: 700; }
+@media (hover: hover) { .filtros label:hover:not(:has(input:checked)) { background: #e8eef8; } }
 .filtros label:has(input:checked) { background: var(--tinta); color: #fff; border-color: var(--tinta); }
 .filtros label:has(input:focus-visible) { outline: 3px solid var(--boli); outline-offset: 2px; }
 
@@ -239,7 +257,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
 .mapa-zona { position: relative; min-width: 0; }
 #mapa { position: absolute; inset: 0; }
 .reproductor {
-  position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
+  position: absolute; z-index: 2; left: 50%; bottom: 44px; transform: translateX(-50%);
   width: min(620px, calc(100% - 32px));
   background: var(--tinta); color: #fff; border-radius: 10px;
   padding: 14px 16px 12px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center;
@@ -281,12 +299,63 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
 .cuadro-info li i { flex: none; width: 10px; height: 10px; border-radius: 2px; }
 .cuadro-info em { display: block; font-style: normal; color: #c9d4de; margin-top: 4px; }
 
+/* La entrada. La primera vez, los cuadros se levantan de la hoja tantos días como calor pasan sus centros
+   y luego se posan. Una nota lleva la cuenta y dos banderines marcan los extremos. Nada de esto recibe el
+   puntero: la página se puede usar desde el primer instante y cualquier gesto lo retira. */
+.relieve { position: absolute; left: 0; top: 0; pointer-events: none; }
+.nota, .banderin { position: absolute; z-index: 2; pointer-events: none; transition: opacity .3s ease-out; }
+.nota {
+  left: 14px; width: min(292px, 47vw); padding: 11px 14px 13px;
+  background: #fff; border: 2px solid var(--tinta); border-radius: 8px; box-shadow: 5px 5px 0 var(--tinta);
+}
+.nota p { margin: 0; }
+.nota-que { font-size: 14px; line-height: 1.3; color: var(--tinta-suave); }
+.nota-cuanto { display: grid; margin-top: 7px; font-family: var(--display); font-weight: 800; }
+.nota-cuanto > * { grid-area: 1 / 1; align-self: end; transition: opacity .3s ease-out; }
+.nota-cuanto b { font-size: 76px; line-height: .8; font-stretch: 75%; font-variant-numeric: tabular-nums; }
+.nota-cuanto span { font-size: 27px; line-height: 1.04; font-stretch: 80%; text-wrap: balance; opacity: 0; }
+.nota.dicho .nota-cuanto b { opacity: 0; }
+.nota.dicho .nota-cuanto span { opacity: 1; }
+/* El banderín se clava en lo alto de su cuadro: punto, asta y cartel */
+.banderin { left: 0; top: 0; opacity: 0; }
+.banderin.puesto { opacity: 1; }
+.banderin::before {
+  content: ""; position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--tramo); border: 2px solid var(--tinta);
+}
+.banderin::after { content: ""; position: absolute; left: -1px; bottom: 4px; width: 2px; height: 26px; background: var(--tinta); }
+.banderin div {
+  position: absolute; left: -1px; bottom: 28px; display: flex; align-items: center; gap: 7px; white-space: nowrap;
+  background: #fff; border: 2px solid var(--tinta); border-radius: 2px 6px 6px 2px; box-shadow: 3px 3px 0 var(--tinta);
+  padding: 4px 9px 4px 7px; transform-origin: left bottom;
+}
+.banderin.izq div { left: auto; right: -1px; border-radius: 6px 2px 2px 6px; transform-origin: right bottom; }
+.banderin b { font: 800 27px/1 var(--display); font-stretch: 78%; font-variant-numeric: tabular-nums; }
+.banderin span { font-size: 12.5px; line-height: 1.2; }
+.se-va { opacity: 0 !important; transition: opacity .2s ease-out !important; }
+
 @media (max-width: 860px) {
-  body { display: flex; flex-direction: column; height: auto; overflow: auto; }
-  .mapa-zona { order: -1; flex: none; }
-  #mapa { position: relative; height: 58vh; }
-  .panel { border-right: 0; padding: 20px 16px 24px; overflow: visible; }
-  h1 { font-size: 36px; }
+  /* En móvil manda el orden de lectura: la pregunta, el buscador, el mapa y, debajo, lo demás.
+     El panel y su cabecera se deshacen (display: contents) para poder intercalar el mapa entre sus piezas. */
+  body {
+    display: flex; flex-direction: column; height: auto; overflow: auto;
+    background-image:
+      linear-gradient(var(--cuadricula) 1px, transparent 1px),
+      linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
+    background-size: 22px 22px;
+    background-position: -1px -1px;
+  }
+  .panel, .panel > header { display: contents; }
+  .panel > *, .panel > header > * { order: 4; margin-left: 16px; margin-right: 16px; }
+  .panel .marca { order: 1; margin-top: 18px; }
+  .panel h1 { order: 1; font-size: clamp(1.75rem, 1rem + 5.1vw, 2.25rem); }
+  .panel .buscador { order: 2; margin-top: 16px; }
+  .mapa-zona { order: 3; flex: none; margin-top: 16px; border-top: 1px solid #c9d4de; }
+  .panel .entrada, .panel .filtros, .panel #detalle, .panel .leyenda, .panel .pie { margin-top: 22px; }
+  .panel .entrada { max-width: none; }
+  .panel .pie { margin-bottom: 24px; }
+  /* el mapa deja ver lo que sigue debajo, para que se note que la página continúa */
+  #mapa { position: relative; height: 58vh; height: clamp(300px, 100svh - 290px, 58vh); }
   /* en móvil el reproductor va debajo del mapa, para no tapar el sur */
   .reproductor { position: static; transform: none; width: 100%; border-radius: 0; box-shadow: none; grid-template-columns: 1fr; }
   .reproductor button { width: 100%; }
@@ -296,7 +365,22 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   /* con una ficha abierta, el mapa se encoge y la ficha queda justo debajo */
   .con-ficha #mapa { height: 36vh; }
   .con-ficha .mapa-zona:not(.curso) .reproductor { display: none; }
-  .con-ficha .panel { padding-top: 16px; }
+  .con-ficha .panel #detalle { margin-top: 18px; }
+  .nota { left: 10px; padding: 8px 10px 10px; border-radius: 6px; box-shadow: 3px 3px 0 var(--tinta); }
+  .nota-que { font-size: 12.5px; }
+  .nota-cuanto { margin-top: 5px; }
+  .nota-cuanto b { font-size: 52px; }
+  .nota-cuanto span { font-size: 20px; }
+  .banderin div { gap: 5px; padding: 3px 7px 3px 6px; }
+  .banderin b { font-size: 21px; }
+  .banderin span { font-size: 11.5px; }
+}
+/* en los móviles más pequeños el mapa es corto: la nota se encoge para tapar lo menos posible */
+@media (max-width: 380px), (max-width: 860px) and (max-height: 700px) {
+  .nota { width: 44vw; padding: 6px 8px 8px; }
+  .nota-que { font-size: 11.5px; line-height: 1.25; }
+  .nota-cuanto b { font-size: 44px; }
+  .nota-cuanto span { font-size: 17.5px; }
 }
 /* Al abrir una ficha: se posa en el papel, la marca recorre la escala mientras sube la cifra,
    crecen los cursos y los días de calor se van marcando en orden */
@@ -309,6 +393,20 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   .dias i.c { animation: marcar .3s ease-out calc(.5s + var(--n) * 26ms) backwards; }
   .acciones button, .acciones .principal { transition: transform .08s ease-out; }
   .acciones button:active, .acciones .principal:active { transform: translate(1px, 2px); }
+  /* La entrada: la nota se posa como la ficha, la cuenta deja paso a la frase, los banderines se clavan
+     y la flecha del apunte se traza a boli */
+  .nota { animation: posar .36s cubic-bezier(.2, .9, .3, 1.15) backwards; }
+  .nota-cuanto > * { transition: opacity .3s ease-out, filter .3s ease-out, translate .3s cubic-bezier(.23, 1, .32, 1); }
+  .nota-cuanto span { filter: blur(4px); translate: 0 7px; }
+  .nota.dicho .nota-cuanto b { filter: blur(4px); translate: 0 -7px; }
+  .nota.dicho .nota-cuanto span { filter: none; translate: none; }
+  .banderin div { scale: .8; transition: scale .34s cubic-bezier(.2, .9, .3, 1.4); }
+  .banderin.puesto div { scale: 1; }
+  .apunte { translate: 0 4px; transition: opacity .25s ease-out, translate .25s ease-out; }
+  .apunte.puesto { translate: none; }
+  .apunte path { stroke-dasharray: 1 1.5; stroke-dashoffset: 1.25; }   /* el hueco de más evita un punto suelto antes de trazarse */
+  .apunte.puesto path { stroke-dashoffset: 0; transition: stroke-dashoffset .42s cubic-bezier(.4, 0, .2, 1) .2s; }
+  .apunte.puesto path + path { transition-duration: .16s; transition-delay: .6s; }
   @keyframes posar { from { opacity: 0; transform: translate(5px, 5px); box-shadow: 0 0 0 var(--tinta); } }
   @keyframes llenar { from { transform: scaleX(0); } }
   @keyframes recorrer { from { left: 0; } }
@@ -441,6 +539,13 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   const ctx = lienzo.getContext('2d');
 
   let grupo = 'todos', cuadros = new Map(), diaPintado = null, entrada = 1;
+  // La entrada completa (el relieve) se ve la primera vez, o siempre que la dirección lleve ?entrada.
+  // Quien vuelve o llega con el enlace de una ficha va directo al mapa.
+  const VISTA = 'termometro-entrada';
+  const yaVista = (() => { try { return localStorage.getItem(VISTA) === '1'; } catch { return false; } })();
+  const fichaEnUrl = (id => porId.has(id) ? id : null)(new URLSearchParams(location.hash.slice(1)).get('c'));
+  const conEntrada = !fichaEnUrl && (!yaVista || new URLSearchParams(location.search).has('entrada'));
+  let cargado = false, enRelieve = conEntrada && !reducido;   // mientras dura el relieve, los cuadros planos esperan
   function agrupar() {
     cuadros = new Map();
     for (const c of centros) {
@@ -454,6 +559,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
       q.tramo = 1;
       for (let t = 2; t <= 5; t++) if (q.porTramo[t - 1] >= q.porTramo[q.tramo - 1]) q.tramo = t;
       q.baja = q.centros.filter(c => c.confianza === 'baja').length * 2 >= q.centros.length;
+      q.dias = q.centros.reduce((s, c) => s + c.d27, 0) / q.centros.length;   // días de calor al año, de media
       for (let d = 0; d < nd; d++) { let s = 0; for (const c of q.centros) s += c.acum[d]; q.media[d] = s / q.centros.length; }
     }
   }
@@ -542,7 +648,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
 
   // La vista inicial encuadra todos los cuadros y deja sitio a la leyenda y al reproductor
   const REGION = [[lonDe(CX0 * LADO), latDe(CY0 * LADO)], [lonDe((CX1 + 1) * LADO), latDe((CY1 + 1) * LADO)]];
-  const MARGEN = matchMedia('(max-width: 860px)').matches ? { top: 56, bottom: 4, left: 4, right: 4 } : { top: 10, bottom: 100, left: 10, right: 10 };
+  const MARGEN = matchMedia('(max-width: 860px)').matches ? { top: 56, bottom: 4, left: 4, right: 4 } : { top: 10, bottom: 116, left: 10, right: 10 };
   const mapa = new maplibregl.Map({
     container: 'mapa',
     bounds: REGION,
@@ -564,8 +670,35 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   const aparece = v => ['interpolate', ['linear'], ['zoom'], Z_PUNTOS, 0, 11, v];
   // Confianza baja: punto hueco, con el color solo en el borde
   function colorPuntos(color) {
+    if (!mapa.getLayer('centros')) return;
     mapa.setPaintProperty('centros', 'circle-color', ['case', esBaja, '#ffffff', color]);
     mapa.setPaintProperty('centros', 'circle-stroke-color', ['case', esBaja, color, '#ffffff']);
+  }
+  const filtroGrupo = () => grupo === 'todos' ? null : ['==', ['get', 'grupo'], grupo];
+  // Preparar los 2.078 centros es lo más pesado de la carga y no se ven hasta acercarse: durante la entrada
+  // esperan a que termine, para que el relieve suba sin tirones. Nacen con el filtro, el color y el centro
+  // elegido que haya en ese momento
+  function ponerCentros() {
+    if (!cargado || mapa.getSource('centros')) return;
+    const filtro = filtroGrupo() ? { filter: filtroGrupo() } : {};
+    mapa.addSource('centros', { type: 'geojson', data: geojson() });
+    mapa.addLayer({
+      id: 'centros-borde', type: 'circle', source: 'centros', minzoom: Z_PUNTOS, ...filtro,
+      paint: { 'circle-color': '#18222d', 'circle-radius': porZoom((r, z) => ['+', r, z < 12 ? 1.1 : 2]), 'circle-opacity': aparece(.45) }
+    });
+    mapa.addLayer({
+      id: 'centros', type: 'circle', source: 'centros', minzoom: Z_PUNTOS, ...filtro,
+      paint: {
+        'circle-radius': porZoom(r => ['case', esBaja, ['*', .58, r], r]),
+        'circle-stroke-width': porZoom((r, z) => ['case', esBaja, ['+', ['*', .42, r], z < 12 ? .4 : 1.2], z < 12 ? .4 : 1.2]),
+        'circle-opacity': aparece(1), 'circle-stroke-opacity': aparece(1)
+      }
+    });
+    colorPuntos(diaPintado == null ? colorTramo : colorAcum(diaPintado));
+    mapa.addLayer({
+      id: 'elegido', type: 'circle', source: 'centros', filter: ['==', ['get', 'id'], actual ? actual.id : ''],
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 17, 15, 26], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#18222d', 'circle-stroke-width': 3 }
+    });
   }
 
   mapa.on('load', () => {
@@ -584,32 +717,16 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
       id: 'cuadros', type: 'raster', source: 'cuadros',
       paint: { 'raster-opacity': ['interpolate', ['linear'], ['zoom'], 10.2, .95, Z_CUADROS, 0], 'raster-fade-duration': 0 }
     }, antes);
-    mapa.addSource('centros', { type: 'geojson', data: geojson() });
-    mapa.addLayer({
-      id: 'centros-borde', type: 'circle', source: 'centros', minzoom: Z_PUNTOS,
-      paint: { 'circle-color': '#18222d', 'circle-radius': porZoom((r, z) => ['+', r, z < 12 ? 1.1 : 2]), 'circle-opacity': aparece(.45) }
-    });
-    mapa.addLayer({
-      id: 'centros', type: 'circle', source: 'centros', minzoom: Z_PUNTOS,
-      paint: {
-        'circle-radius': porZoom(r => ['case', esBaja, ['*', .58, r], r]),
-        'circle-stroke-width': porZoom((r, z) => ['case', esBaja, ['+', ['*', .42, r], z < 12 ? .4 : 1.2], z < 12 ? .4 : 1.2]),
-        'circle-opacity': aparece(1), 'circle-stroke-opacity': aparece(1)
-      }
-    });
-    colorPuntos(colorTramo);
-    mapa.addLayer({
-      id: 'elegido', type: 'circle', source: 'centros', filter: ['==', ['get', 'id'], ''],
-      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 17, 15, 26], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#18222d', 'circle-stroke-width': 3 }
-    });
-
-    const desdeUrl = new URLSearchParams(location.hash.slice(1)).get('c');
-    if (desdeUrl && porId.has(desdeUrl)) elegir(desdeUrl, true);
+    cargado = true;
+    if (enRelieve) return;                        // la entrada posa los cuadros y pone los centros cuando acaba
+    ponerCentros();
+    if (fichaEnUrl) elegir(fichaEnUrl, true);
     if (reducido || actual) dibujar();
     else {
+      // a quien vuelve, los tramos le entran en medio segundo, del más fresco al más caluroso
       const t0 = performance.now();
       (function paso(t) {
-        entrada = Math.min(1, (t - t0) / 1500);
+        entrada = Math.min(1, (t - t0) / 600);
         dibujar();
         if (entrada < 1) requestAnimationFrame(paso);
       })(t0);
@@ -651,23 +768,23 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   agrupar();
   document.getElementById('filtros').addEventListener('change', e => {
     grupo = e.target.value;
-    const filtro = grupo === 'todos' ? null : ['==', ['get', 'grupo'], grupo];
-    mapa.setFilter('centros', filtro); mapa.setFilter('centros-borde', filtro);
+    if (mapa.getLayer('centros')) { mapa.setFilter('centros', filtroGrupo()); mapa.setFilter('centros-borde', filtroGrupo()); }
     agrupar(); dibujar();
     if (!actual) resumen();
   });
 
   // ---------- ficha
-  const detalle = document.getElementById('detalle'), panel = document.getElementById('panel'), filtrosEl = document.getElementById('filtros');
+  const detalle = document.getElementById('detalle'), panel = document.getElementById('panel'), filtrosEl = document.getElementById('filtros'),
+        buscadorEl = document.querySelector('.buscador');
   const movil = matchMedia('(max-width: 860px)');
   let actual = null;
 
-  // En móvil la ficha va la primera del panel, justo debajo del mapa; en pantalla ancha, tras el buscador y los filtros
+  // En móvil la ficha va tras el buscador, justo debajo del mapa; en pantalla ancha, tras el buscador y los filtros
   function colocar() {
     const cambia = document.body.classList.contains('con-ficha') !== !!actual;
     document.body.classList.toggle('con-ficha', !!actual);
-    if (actual && movil.matches) { if (panel.firstElementChild !== detalle) panel.prepend(detalle); }
-    else if (filtrosEl.nextElementSibling !== detalle) filtrosEl.after(detalle);
+    const delante = actual && movil.matches ? buscadorEl : filtrosEl;
+    if (delante.nextElementSibling !== detalle) delante.after(detalle);
     if (cambia) mapa.resize();
   }
   movil.addEventListener('change', colocar);
@@ -1073,6 +1190,208 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
       if (++dia >= nd) parar(true);
     }, paso);
   });
+
+  // ---------- la entrada
+  // La primera vez, los cuadros se levantan de la hoja. Cada uno sube tantos días como calor pasan de media sus
+  // centros (los mismos días de clase al año con 27 °C o más en la calle que da la ficha) y todos suben al mismo
+  // ritmo: los de la sierra se paran enseguida y los del sur siguen. Después se posan y queda el mapa de siempre.
+  // No exagera: las alturas parten de cero, no hay perspectiva (un día mide lo mismo en todo el mapa) y los
+  // cuadros con confianza baja siguen rayados. No estorba: nada recibe el puntero y cualquier gesto la retira.
+  const GESTOS = ['pointerdown', 'touchstart', 'wheel', 'keydown'];
+  const esGesto = e => e.type !== 'keydown' || e.key.length === 1 || /^(Tab|Enter|Escape|Backspace|Arrow|Page|Home|End)/.test(e.key);
+  function entrar() {
+    const ALTO_DIA = .3;                         // lo que sube un cuadro por cada día, en lados de cuadro
+    const SESGO = Math.sin(20 * RAD), ALZA = Math.cos(20 * RAD);   // suben inclinados a la derecha, en caballera
+    const T = { sube: [100, 2000], posa: [2700, 3350], apunte: 2900, foco: 3450, centros: 4100, fin: 9000 };   // en milisegundos
+    const frio = centros.reduce((a, c) => c.d27 < a.d27 ? c : a), calido = centros.reduce((a, c) => c.d27 > a.d27 ? c : a);
+    // de norte a sur y de este a oeste: cada cuadro tapa a los que le quedan detrás
+    const pila = [...cuadros.values()].sort((a, b) => b.cy - a.cy || b.cx - a.cx);
+    const tope = Math.max(...pila.map(q => q.dias));
+    const NO = [lonDe(CX0 * LADO), latDe((CY1 + 1) * LADO)], SE = [lonDe((CX1 + 1) * LADO), latDe(CY0 * LADO)];
+    const malla = () => { const a = mapa.project(NO), b = mapa.project(SE); return { x0: a.x, y0: a.y, s: (b.x - a.x) / (CX1 - CX0 + 1) }; };
+    const limite = v => Math.max(0, Math.min(1, v));
+    const crear = (clase, html) => {
+      const el = document.createElement('div');
+      el.className = clase; el.setAttribute('aria-hidden', 'true'); el.innerHTML = html;
+      return el;
+    };
+
+    // La nota lleva la cuenta mientras suben y acaba diciendo el resultado; los banderines marcan los dos extremos
+    const nota = crear('nota', `<p class="nota-que">Días de clase al año con 27&nbsp;°C o más en la calle</p>
+      <p class="nota-cuanto"><b>0</b><span>De ${Math.round(frio.d27)} a ${Math.round(calido.d27)}, según dónde esté el cole</span></p>`);
+    const cuenta = nota.querySelector('b');
+    const banderines = [frio, calido].map(c => {
+      const n = Math.round(c.d27);
+      const el = crear('banderin', `<div><b>${n}</b><span>${n === 1 ? 'día' : 'días'} al año<br>en ${esc(c.municipio)}</span></div>`);
+      el.style.setProperty('--tramo', COLORES[c.tramo - 1]);
+      return { el, q: cuadros.get(c.cx + ',' + c.cy), ancho: 0 };
+    });
+    const apunte = crear('apunte', '¿Y el tuyo?<svg viewBox="0 0 30 31"><path pathLength="1" d="M2 9C9 2 22 3 21 26"/><path pathLength="1" d="M14 19.5l7 7 5-8.5"/></svg>');
+    const lz = document.createElement('canvas'), g = lz.getContext('2d');
+    lz.className = 'relieve'; lz.setAttribute('aria-hidden', 'true');
+
+    // Las paredes llevan el color del tramo en sombra; con confianza baja van veladas y la cara de arriba, rayada
+    // como en los cuadros planos
+    const PAPEL = rgb('#f3f6f8');
+    const tono = (k, f, velo = 0) => `rgb(${rgb(k).map((v, j) => Math.round((v + (PAPEL[j] - v) * velo) * f)).join(',')})`;
+    const CARAS = COLORES.map(k => [
+      { sur: tono(k, .8), oeste: tono(k, .62), capa: tono(k, .5) },
+      { sur: tono(k, .86, .55), oeste: tono(k, .7, .55), capa: tono(k, .58, .55) }
+    ]);
+    function trama(color, p, w) {
+      const c = document.createElement('canvas'), k = c.getContext('2d');
+      c.width = c.height = p;
+      k.fillStyle = '#f3f6f8'; k.fillRect(0, 0, p, p);
+      k.fillStyle = k.strokeStyle = color; k.globalAlpha = .3; k.fillRect(0, 0, p, p);
+      k.globalAlpha = 1; k.lineWidth = w; k.beginPath();
+      for (const d of [-p, 0, p]) { k.moveTo(d - 1, p + 1); k.lineTo(d + p + 1, -1); }
+      k.stroke();
+      return g.createPattern(c, 'repeat');
+    }
+    // Cada cuadro es un bloque hecho de capas, una por día: la cara de arriba es el cuadro del mapa, desplazado
+    // tantas capas como días lleva subidos, y asoman la pared sur y la pared oeste. Solo se pinta lo que se ve:
+    // la parte de pared que queda por encima del vecino de delante
+    for (const q of pila) { q.sur = cuadros.get(q.cx + ',' + (q.cy - 1)); q.oeste = cuadros.get((q.cx - 1) + ',' + q.cy); }
+    const DX = new Int16Array(Math.ceil(tope) + 2), DY = new Int16Array(Math.ceil(tope) + 2);
+    let tramas = null, encaje = '', hueco = 1;
+    function pintar(nivel, alza) {
+      const caja = mapa.getContainer(), an = caja.clientWidth, al = caja.clientHeight, dpr = Math.min(window.devicePixelRatio || 1, 2);
+      if (lz.width !== Math.round(an * dpr) || lz.height !== Math.round(al * dpr)) {
+        lz.width = Math.round(an * dpr); lz.height = Math.round(al * dpr);
+        lz.style.width = an + 'px'; lz.style.height = al + 'px';
+      }
+      const { x0, y0, s } = malla(), S = s * dpr;
+      // el sitio de cada cuadro en el lienzo y el rayado solo se recalculan si el mapa cambia de tamaño
+      if (encaje !== [x0, y0, S].join()) {
+        encaje = [x0, y0, S].join(); hueco = Math.max(1, Math.round(S / 15));
+        tramas = COLORES.map(k => trama(k, Math.max(3, Math.round(S * PASO / PX)), S * TRAZO / PX));
+        for (const q of pila) {
+          q.x = Math.round((x0 + (q.cx - CX0) * s) * dpr); q.w = Math.round((x0 + (q.cx - CX0 + 1) * s) * dpr) - q.x;
+          q.y = Math.round((y0 + (CY1 - q.cy) * s) * dpr); q.h = Math.round((y0 + (CY1 - q.cy + 1) * s) * dpr) - q.y;
+        }
+      }
+      const dx = S * ALTO_DIA * alza * SESGO, dy = S * ALTO_DIA * alza * ALZA;   // lo que desplaza cada día, ahora
+      for (let j = 0; j < DX.length; j++) { DX[j] = Math.round(j * dx); DY[j] = Math.round(j * dy); }
+      const lineas = dy > 3.5;                     // con sitio, una línea separa cada capa
+      g.clearRect(0, 0, lz.width, lz.height);
+      for (const q of pila) {
+        const x = q.x, y = q.y, w = q.w, h = q.h, t = q.tramo - 1, cara = CARAS[t][q.baja ? 1 : 0];
+        const dias = Math.min(q.dias, nivel), n = Math.ceil(dias), ox = Math.round(dias * dx), oy = Math.round(dias * dy);
+        if (oy > 0) {
+          const jO = q.oeste ? Math.floor(Math.min(q.oeste.dias, nivel)) : 0, jS = q.sur ? Math.floor(Math.min(q.sur.dias, nivel)) : 0;
+          g.fillStyle = cara.oeste;
+          for (let j = jO; j < n; j++) {
+            const xa = DX[j], ya = DY[j], xb = j + 1 < n ? DX[j + 1] : ox, yb = j + 1 < n ? DY[j + 1] : oy;
+            if (xb > xa) g.fillRect(x + xa, y - yb, xb - xa, h + yb - ya);
+          }
+          g.fillStyle = cara.sur;
+          for (let j = jS; j < n; j++) {
+            const ya = DY[j], yb = j + 1 < n ? DY[j + 1] : oy;
+            if (yb > ya) g.fillRect(x + DX[j], y + h - hueco - yb, w, yb - ya);
+          }
+          if (lineas) {
+            g.fillStyle = cara.capa;
+            for (let j = jS; j < n; j++) g.fillRect(x + DX[j], y + h - hueco - DY[j] - 1, w, 1);
+          }
+        }
+        if (q.baja) { g.setTransform(1, 0, 0, 1, ox, -oy); g.fillStyle = tramas[t]; g.fillRect(x, y, w - hueco, h - hueco); g.setTransform(1, 0, 0, 1, 0, 0); }
+        else { g.fillStyle = COLORES[t]; g.fillRect(x + ox, y - oy, w - hueco, h - hueco); }
+      }
+    }
+    function clavar(nivel, alza) {
+      const { x0, y0, s } = malla(), an = mapa.getContainer().clientWidth;
+      for (const b of banderines) {
+        const sube = Math.min(b.q.dias, nivel) * s * ALTO_DIA * alza;
+        const x = x0 + (b.q.cx - CX0 + .5) * s + sube * SESGO, y = y0 + (CY1 - b.q.cy + .5) * s - sube * ALZA;
+        b.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+        b.el.classList.toggle('izq', x + b.ancho + 10 > an);
+      }
+    }
+    const recolocar = () => clavar(tope, 0);
+    function apuntar() {
+      if (apunte.isConnected) return;
+      buscadorEl.append(apunte);
+      apunte.getBoundingClientRect();              // para que el trazo arranque desde su estado inicial
+      apunte.classList.add('puesto');
+    }
+    const recordar = () => { try { localStorage.setItem(VISTA, '1'); } catch {} };
+
+    let t0 = 0, cuadroId = 0, reloj = 0, relojCentros = 0, posado = false, ido = false;
+    function paso(ahora) {
+      if (!t0) t0 = ahora;
+      const t = ahora - t0;
+      const u = limite((t - T.sube[0]) / (T.sube[1] - T.sube[0])), nivel = tope * (1 - Math.pow(1 - u, 1.6));
+      const v = limite((t - T.posa[0]) / (T.posa[1] - T.posa[0])), alza = 1 - (v < .5 ? 4 * v * v * v : 1 - Math.pow(2 - 2 * v, 3) / 2);
+      pintar(nivel, alza); clavar(nivel, alza);
+      if (cuenta.textContent !== String(Math.round(nivel))) cuenta.textContent = Math.round(nivel);
+      for (const b of banderines) if (nivel >= b.q.dias) b.el.classList.add('puesto');
+      if (u === 1) nota.classList.add('dicho');
+      if (t >= T.apunte) apuntar();
+      if (v < 1) cuadroId = requestAnimationFrame(paso);
+      else posar(t);
+    }
+    // Al posarse, el relieve deja su sitio a los cuadros del mapa; las notas se quedan un rato más
+    function posar(t) {
+      posado = true; enRelieve = false; entrada = 1;
+      dibujar();
+      lz.classList.add('se-va'); setTimeout(() => lz.remove(), 260);
+      recordar();
+      mapa.on('move', recolocar);
+      reloj = setTimeout(despedir, T.fin - t);
+      relojCentros = setTimeout(ponerCentros, Math.max(0, T.centros - t));   // con el apunte ya trazado
+      // con ratón, el cursor queda ya en el buscador
+      if (matchMedia('(hover: hover) and (pointer: fine)').matches) setTimeout(() => {
+        if (!ido && document.activeElement === document.body) input.focus({ preventScroll: true });
+      }, Math.max(0, T.foco - t));
+    }
+    function despedir(e) {
+      if (ido || (e && !esGesto(e))) return;
+      ido = true; enRelieve = false; entrada = 1;
+      cancelAnimationFrame(cuadroId); clearTimeout(reloj); clearTimeout(relojCentros);
+      GESTOS.forEach(n => removeEventListener(n, despedir, true));
+      mapa.off('move', recolocar);
+      if (!posado) dibujar();
+      setTimeout(ponerCentros, 0);                 // después de pintar la respuesta al gesto
+      recordar();
+      for (const el of [lz, nota, apunte, ...banderines.map(b => b.el)]) { el.classList.add('se-va'); setTimeout(() => el.remove(), 260); }
+    }
+
+    const leyendaMapa = zona.querySelector('.mapa-leyenda');
+    nota.style.top = (leyendaMapa.offsetTop + leyendaMapa.offsetHeight + 10) + 'px';
+    zona.insertBefore(nota, info);
+    for (const b of banderines) { zona.insertBefore(b.el, info); b.ancho = b.el.firstElementChild.offsetWidth; }
+    GESTOS.forEach(n => addEventListener(n, despedir, { capture: true, passive: true }));
+    if (reducido) {
+      // Con «reducir movimiento» no hay relieve ni cuenta: el mapa ya posado y las mismas notas, quietas
+      posado = true;
+      nota.classList.add('dicho');
+      recolocar();
+      for (const b of banderines) b.el.classList.add('puesto');
+      apuntar(); recordar();
+      mapa.on('move', recolocar);
+      reloj = setTimeout(despedir, T.fin);
+      return;
+    }
+    zona.insertBefore(lz, leyendaMapa);
+    cuadroId = requestAnimationFrame(paso);
+  }
+  if (conEntrada) {
+    // Arranca cuando el mapa ha cargado, que es cuando antes aparecían los cuadros: así sube sin tirones y sobre
+    // el mapa ya dibujado. Espera también a la letra de los titulares (como mucho 0,7 s) para que la cuenta no
+    // cambie de tipo a media subida
+    let gesto = false;
+    const anotar = e => { if (esGesto(e)) gesto = true; };
+    GESTOS.forEach(n => addEventListener(n, anotar, { capture: true, passive: true }));
+    const letra = document.fonts && document.fonts.load ? document.fonts.load('800 40px "Bricolage Grotesque"').catch(() => {}) : Promise.resolve();
+    const mapaListo = new Promise(r => mapa.once('load', r));
+    Promise.all([Promise.race([letra, new Promise(r => setTimeout(r, 700))]), mapaListo]).then(() => {
+      GESTOS.forEach(n => removeEventListener(n, anotar, true));
+      if (!gesto) { entrar(); return; }
+      // si ya está usando la página, no hay entrada: el mapa, tal cual
+      enRelieve = false;
+      ponerCentros(); dibujar();
+    });
+  }
 
   resumen();
 })();
