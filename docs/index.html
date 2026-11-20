@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termómetro Escolar</title>
+<meta name="description" content="Cuántos días de clase pasa cada centro público de la Comunidad de Madrid con 27 °C o más en la calle. Datos abiertos de la Comunidad de Madrid.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 26'%3E%3Crect x='4' y='1' width='6' height='17' rx='3' fill='white' stroke='%2318222d' stroke-width='2'/%3E%3Ccircle cx='7' cy='20' r='5' fill='%23e2522b'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+:root {
+  --papel: #f3f6f8;
+  --cuadricula: #dfe7ee;
+  --tinta: #18222d;
+  --tinta-suave: #556575;
+  --boli: #2346a8;
+  --t1: #8fc3da;
+  --t2: #f1e08f;
+  --t3: #f5a64a;
+  --t4: #e2522b;
+  --t5: #9e1438;
+  --panel: 400px;
+  --display: "Bricolage Grotesque", system-ui, sans-serif;
+  --texto: "Atkinson Hyperlegible", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--papel);
+  color: var(--tinta);
+  font: 16px/1.5 var(--texto);
+  display: grid;
+  grid-template-columns: var(--panel) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+a { color: var(--boli); }
+:focus-visible { outline: 3px solid var(--boli); outline-offset: 2px; }
+
+/* Panel: papel cuadriculado de cuaderno */
+.panel {
+  overflow-y: auto;
+  padding: 28px 28px 24px;
+  background-color: var(--papel);
+  background-image:
+    linear-gradient(var(--cuadricula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+  border-right: 1px solid #c9d4de;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.marca {
+  font: 700 15px/1 var(--display);
+  font-stretch: 85%;
+  letter-spacing: .01em;
+  color: var(--tinta-suave);
+  display: flex; align-items: center; gap: 8px;
+}
+.marca svg { flex: none; }
+h1 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-stretch: 78%;
+  font-size: 44px;
+  line-height: .98;
+  letter-spacing: -.01em;
+  margin: 10px 0 0;
+}
+.entrada { color: var(--tinta-suave); margin: 10px 0 0; max-width: 34ch; }
+
+/* Buscador */
+.buscador { position: relative; }
+.buscador label { display: block; font-weight: 700; margin-bottom: 6px; }
+.buscador input {
+  width: 100%;
+  font: 18px/1.2 var(--texto);
+  padding: 13px 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--tinta);
+}
+.buscador input::placeholder { color: #8796a5; }
+.resultados {
+  position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 4px);
+  margin: 0; padding: 4px; list-style: none;
+  background: #fff; border: 2px solid var(--tinta); border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--tinta);
+  max-height: 340px; overflow-y: auto;
+}
+.resultados[hidden] { display: none; }
+.resultados li {
+  padding: 8px 10px; border-radius: 4px; cursor: pointer;
+  display: grid; grid-template-columns: 12px 1fr; gap: 0 10px; align-items: baseline;
+}
+.resultados li[aria-selected="true"], .resultados li:hover { background: #e8eef8; }
+.resultados .punto { width: 12px; height: 12px; border-radius: 50%; align-self: center; }
+.resultados small { grid-column: 2; color: var(--tinta-suave); }
+.vacio { padding: 8px 10px; color: var(--tinta-suave); }
+
+/* Filtros */
+.filtros { display: flex; flex-wrap: wrap; gap: 6px; border: 0; padding: 0; margin: 0; }
+.filtros legend { font-weight: 700; margin-bottom: 6px; padding: 0; }
+.filtros label {
+  font-size: 14px; padding: 5px 11px; border: 1.5px solid var(--tinta-suave);
+  border-radius: 999px; background: #fff; cursor: pointer; user-select: none;
+}
+.filtros input { position: absolute; opacity: 0; pointer-events: none; }
+.filtros input:checked + span { font-weight: 700; }
+.filtros label:has(input:checked) { background: var(--tinta); color: #fff; border-color: var(--tinta); }
+.filtros label:has(input:focus-visible) { outline: 3px solid var(--boli); outline-offset: 2px; }
+
+/* Ficha del centro */
+.ficha {
+  background: #fff;
+  border: 2px solid var(--tinta);
+  border-radius: 8px;
+  padding: 20px 20px 18px;
+  box-shadow: 5px 5px 0 var(--tinta);
+}
+.ficha h2 { font: 800 26px/1.05 var(--display); font-stretch: 82%; margin: 0; }
+.ficha .donde { color: var(--tinta-suave); margin: 4px 0 0; }
+.cifra { display: flex; align-items: flex-end; gap: 12px; margin: 18px 0 6px; }
+.cifra b {
+  font: 800 76px/.8 var(--display);
+  font-stretch: 75%;
+  font-variant-numeric: tabular-nums;
+}
+.cifra span { line-height: 1.25; padding-bottom: 2px; }
+.termo { margin: 16px 0 4px; }
+.termo-escala {
+  position: relative; height: 14px; border-radius: 7px;
+  background: linear-gradient(90deg, var(--t1) 0 20%, var(--t2) 20% 40%, var(--t3) 40% 60%, var(--t4) 60% 80%, var(--t5) 80% 100%);
+}
+.termo-marca {
+  position: absolute; top: -5px; width: 4px; height: 24px; margin-left: -2px;
+  background: var(--tinta); border-radius: 2px; box-shadow: 0 0 0 2px #fff;
+}
+.termo-pie { display: flex; justify-content: space-between; font-size: 13px; color: var(--tinta-suave); margin-top: 4px; }
+.termo p { margin: 8px 0 0; }
+.cursos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-items: end; height: 92px; margin: 18px 0 4px; }
+.cursos div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 12px; color: var(--tinta-suave); }
+.cursos i { display: block; width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
+.cursos b { font-size: 13px; color: var(--tinta); }
+.datos { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 16px 0 0; font-size: 15px; }
+.datos dt { color: var(--tinta-suave); }
+.datos dd { margin: 0; }
+.aviso { margin: 14px 0 0; padding: 10px 12px; background: #fff7e0; border-left: 4px solid var(--t3); font-size: 14px; }
+.acciones { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+button {
+  font: 700 15px/1 var(--texto); color: var(--tinta);
+  background: #fff; border: 2px solid var(--tinta); border-radius: 6px; padding: 10px 14px; cursor: pointer;
+}
+button:hover { background: #e8eef8; }
+
+/* Resumen cuando no hay centro elegido */
+.resumen h2 { font: 800 24px/1.1 var(--display); font-stretch: 82%; margin: 0 0 6px; }
+.resumen p { margin: 0 0 10px; }
+.ranking { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+.ranking li { counter-increment: r; }
+.ranking button {
+  width: 100%; text-align: left; border: 0; background: transparent; padding: 7px 4px; border-radius: 4px;
+  display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: baseline; font-weight: 400;
+}
+.ranking button::before { content: counter(r); font: 700 14px var(--display); color: var(--tinta-suave); }
+.ranking button:hover { background: rgba(35,70,168,.08); }
+.ranking small { display: block; color: var(--tinta-suave); line-height: 1.3; margin-top: 2px; }
+.ranking .dias { font: 800 20px var(--display); font-variant-numeric: tabular-nums; }
+
+.leyenda h3 { font-size: 15px; margin: 0 0 6px; }
+.leyenda ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.leyenda li { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.leyenda i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,.15); }
+.pie { font-size: 13px; color: var(--tinta-suave); margin-top: auto; }
+.pie p { margin: 0 0 6px; }
+
+/* Mapa y reproductor */
+.mapa-zona { position: relative; min-width: 0; }
+#mapa { position: absolute; inset: 0; }
+.reproductor {
+  position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%);
+  width: min(620px, calc(100% - 32px));
+  background: var(--tinta); color: #fff; border-radius: 10px;
+  padding: 14px 16px 12px; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; align-items: center;
+  box-shadow: 0 10px 30px rgba(24,34,45,.25);
+}
+.reproductor button { background: #fff; border-color: #fff; min-width: 132px; }
+.reproductor button:hover { background: #e8eef8; }
+.rep-texto { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rep-fecha { font: 800 22px/1 var(--display); font-stretch: 80%; font-variant-numeric: tabular-nums; }
+.rep-cuenta { font-size: 14px; color: #c9d4de; }
+.rep-barra { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: #33414f; overflow: hidden; }
+.rep-barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--t3), var(--t5)); }
+.rep-leyenda { grid-column: 1 / -1; display: grid; grid-template-columns: auto auto 1fr auto; gap: 8px; align-items: center; font-size: 12px; color: #c9d4de; }
+.rep-leyenda[hidden] { display: none; }
+.rep-leyenda i { grid-column: 3; grid-row: 1; height: 8px; border-radius: 4px;
+  background: linear-gradient(90deg, #c3d3df 0%, var(--t2) 3%, var(--t3) 22%, var(--t4) 44%, var(--t5) 72%, #5a0b2a 100%); }
+.rep-leyenda span:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+.rep-leyenda span:nth-of-type(3) { grid-column: 4; grid-row: 1; }
+.maplibregl-ctrl-attrib { font-size: 11px; }
+
+@media (max-width: 860px) {
+  body { display: flex; flex-direction: column; height: auto; overflow: auto; }
+  .mapa-zona { order: -1; height: 58vh; flex: none; }
+  .panel { border-right: 0; padding: 20px 16px 24px; overflow: visible; }
+  h1 { font-size: 36px; }
+  .reproductor { bottom: 12px; grid-template-columns: 1fr; }
+  .reproductor button { width: 100%; }
+  .cifra b { font-size: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+</style>
+</head>
+<body>
+<main class="panel" id="panel">
+  <header>
+    <div class="marca">
+      <svg width="14" height="26" viewBox="0 0 14 26" aria-hidden="true"><rect x="4" y="1" width="6" height="17" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="7" cy="20" r="5" fill="#e2522b"/><rect x="6" y="8" width="2" height="10" fill="#e2522b"/></svg>
+      Termómetro Escolar
+    </div>
+    <h1>¿Cuánto calor pasa tu cole en horas de clase?</h1>
+    <p class="entrada">Días lectivos con 27&nbsp;°C o más en la calle entre las 9 y las 14 h, en cada centro público de la Comunidad de Madrid.</p>
+  </header>
+
+  <div class="buscador">
+    <label for="buscar">Busca tu centro</label>
+    <input id="buscar" type="search" autocomplete="off" placeholder="Nombre o municipio" role="combobox" aria-expanded="false" aria-controls="lista" aria-autocomplete="list">
+    <ul id="lista" class="resultados" role="listbox" hidden></ul>
+  </div>
+
+  <fieldset class="filtros" id="filtros">
+    <legend>Qué centros ver</legend>
+    <label><input type="radio" name="grupo" value="todos" checked><span>Todos</span></label>
+    <label><input type="radio" name="grupo" value="cole"><span>Colegios</span></label>
+    <label><input type="radio" name="grupo" value="ies"><span>Institutos</span></label>
+    <label><input type="radio" name="grupo" value="infantil"><span>Escuelas infantiles</span></label>
+    <label><input type="radio" name="grupo" value="otro"><span>Otros</span></label>
+  </fieldset>
+
+  <section id="detalle" aria-live="polite"></section>
+
+  <section class="leyenda">
+    <h3>Calor en horas de clase, frente al resto de centros</h3>
+    <ol>
+      <li><i style="background:var(--t5)"></i>El 20&nbsp;% con más calor</li>
+      <li><i style="background:var(--t4)"></i>Alto</li>
+      <li><i style="background:var(--t3)"></i>Medio</li>
+      <li><i style="background:var(--t2)"></i>Bajo</li>
+      <li><i style="background:var(--t1)"></i>El 20&nbsp;% más fresco</li>
+    </ol>
+  </section>
+
+  <footer class="pie">
+    <p>Temperatura exterior medida por las 28 estaciones de la Red de Calidad del Aire, llevada a cada centro según su distancia y su altitud. Media de los cursos 2021/22 a 2025/26. No es la temperatura dentro del aula.</p>
+    <p>Datos abiertos de la Comunidad de Madrid. <a href="https://github.com/jorge-asenjo/termometro-escolar">Método y código</a>.</p>
+  </footer>
+</main>
+
+<div class="mapa-zona">
+  <div id="mapa" role="region" aria-label="Mapa de centros públicos coloreados por calor en horas de clase"></div>
+  <div class="reproductor" id="reproductor">
+    <button id="play" type="button">Ver el curso 2025/26</button>
+    <div class="rep-texto">
+      <span class="rep-fecha" id="rep-fecha">Curso 2025/26</span>
+      <span class="rep-cuenta" id="rep-cuenta">El mapa se calienta día a día de clase</span>
+    </div>
+    <div class="rep-barra" aria-hidden="true"><i id="rep-barra"></i></div>
+    <div class="rep-leyenda" id="rep-leyenda" hidden><span>Días de calor acumulados</span><i></i><span>0</span><span>36</span></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+(async function () {
+  const COLORES = ['#8fc3da', '#f1e08f', '#f5a64a', '#e2522b', '#9e1438'];
+  const TRAMO_TXT = ['entre el 20&nbsp;% más fresco', 'en el tramo bajo', 'en el tramo medio', 'en el tramo alto', 'entre el 20&nbsp;% con más calor'];
+  const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const fmt = n => n.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+  const norm = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const datos = await (await fetch('centros.json')).json();
+  const K = Object.fromEntries(datos.campos.map((c, i) => [c, i]));
+  const nd = datos.dias.length;
+  const centros = datos.centros.map((r, i) => {
+    const o = Object.fromEntries(datos.campos.map((c, j) => [c, r[j]]));
+    o.i = i;
+    o.clave = norm(o.nombre + ' ' + o.municipio + ' ' + (o.distrito || '') + ' ' + o.tipo);
+    // días calurosos del curso 2025/26, acumulados
+    const acum = new Uint8Array(nd); let n = 0;
+    for (let d = 0; d < nd; d++) {
+      const byte = parseInt(o.calor2526.substr((d >> 3) * 2, 2), 16);
+      if ((byte >> (7 - (d & 7))) & 1) n++;
+      acum[d] = n;
+    }
+    o.acum = acum;
+    return o;
+  });
+  const porId = new Map(centros.map(c => [c.id, c]));
+  const nombreCurso = k => `${String(k).slice(2)}/${String(k + 1).slice(2)}`;
+
+  // Una sola carga de datos: cada día del curso es una propiedad (a0, a1...) y la animación solo cambia el color
+  function geojson() {
+    return {
+      type: 'FeatureCollection',
+      features: centros.map(c => {
+        const p = { id: c.id, tramo: c.tramo, grupo: c.grupo, alumnos: c.alumnos };
+        for (let d = 0; d < nd; d++) p['a' + d] = c.acum[d];
+        return { type: 'Feature', id: c.i, geometry: { type: 'Point', coordinates: [c.lon, c.lat] }, properties: p };
+      })
+    };
+  }
+
+  const mapa = new maplibregl.Map({
+    container: 'mapa',
+    style: 'https://tiles.openfreemap.org/styles/positron',
+    bounds: [[-4.32, 40.08], [-3.12, 41.02]],
+    fitBoundsOptions: { padding: 30 },
+    attributionControl: { compact: true }
+  });
+  mapa.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+
+  const colorTramo = ['match', ['get', 'tramo'], 1, COLORES[0], 2, COLORES[1], 3, COLORES[2], 4, COLORES[3], COLORES[4]];
+  const colorAcum = d => ['interpolate', ['linear'], ['get', 'a' + d], 0, '#c3d3df', 1, COLORES[1], 8, COLORES[2], 16, COLORES[3], 26, COLORES[4], 36, '#5a0b2a'];
+  const REGION = [[-4.32, 40.08], [-3.12, 41.02]];
+  const radio = ['interpolate', ['linear'], ['zoom'], 8, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 2.2, 1500, 5],
+                 12, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 5, 1500, 11], 15, ['interpolate', ['linear'], ['get', 'alumnos'], 0, 8, 1500, 18]];
+
+  mapa.on('load', () => {
+    mapa.addSource('centros', { type: 'geojson', data: geojson() });
+    mapa.addLayer({
+      id: 'centros', type: 'circle', source: 'centros',
+      paint: {
+        'circle-color': colorTramo, 'circle-radius': radio,
+        'circle-stroke-color': '#ffffff', 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 8, .4, 13, 1.2],
+        'circle-opacity': .92
+      }
+    });
+    mapa.addLayer({
+      id: 'elegido', type: 'circle', source: 'centros', filter: ['==', ['get', 'id'], ''],
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 9, 12, 17, 15, 26], 'circle-color': 'rgba(0,0,0,0)', 'circle-stroke-color': '#18222d', 'circle-stroke-width': 3 }
+    });
+    mapa.on('click', 'centros', e => elegir(e.features[0].properties.id, false));
+    mapa.on('mouseenter', 'centros', () => mapa.getCanvas().style.cursor = 'pointer');
+    mapa.on('mouseleave', 'centros', () => mapa.getCanvas().style.cursor = '');
+    const desdeUrl = new URLSearchParams(location.hash.slice(1)).get('c');
+    if (desdeUrl && porId.has(desdeUrl)) elegir(desdeUrl, true);
+  });
+
+  // ---------- filtros
+  let grupo = 'todos';
+  document.getElementById('filtros').addEventListener('change', e => {
+    grupo = e.target.value;
+    mapa.setFilter('centros', grupo === 'todos' ? null : ['==', ['get', 'grupo'], grupo]);
+    if (!actual) resumen();
+  });
+
+  // ---------- ficha
+  const detalle = document.getElementById('detalle');
+  let actual = null;
+
+  function resumen() {
+    const lista = centros.filter(c => grupo === 'todos' ? c.grupo !== 'otro' : c.grupo === grupo)
+      .sort((a, b) => b.d27 - a.d27 || b.gh25 - a.gh25).slice(0, 8);
+    const ds = centros.map(c => c.d27).sort((a, b) => a - b);
+    detalle.innerHTML = `
+      <div class="resumen">
+        <h2>De ${Math.round(ds[0])} a ${Math.round(ds[ds.length - 1])} días de calor al año, según dónde esté el centro</h2>
+        <p>Cada punto es un centro público; su tamaño, los alumnos que tiene. Estos son los que más días de calor pasan en horas de clase:</p>
+        <ol class="ranking">${lista.map(c => `
+          <li><button type="button" data-id="${c.id}">
+            <span>${esc(c.nombre)}<small>${esc(c.tipo)}, ${esc(c.municipio)}</small></span>
+            <span class="dias">${fmt(c.d27)}</span>
+          </button></li>`).join('')}
+        </ol>
+      </div>`;
+    detalle.querySelectorAll('[data-id]').forEach(b => b.addEventListener('click', () => elegir(b.dataset.id, true)));
+  }
+
+  function elegir(id, volar) {
+    const c = porId.get(id);
+    if (!c) return;
+    actual = c;
+    history.replaceState(null, '', '#c=' + id);
+    if (mapa.getLayer('elegido')) mapa.setFilter('elegido', ['==', ['get', 'id'], id]);
+    if (volar) mapa.flyTo({ center: [c.lon, c.lat], zoom: Math.max(mapa.getZoom(), 13), duration: reducido ? 0 : 1400 });
+    const max = Math.max(...c.serie, 1);
+    const nombreGrupo = { cole: 'colegios', ies: 'institutos', infantil: 'escuelas infantiles', otro: 'centros' }[c.grupo];
+    const masQue = Math.max(0, c.percentil - 1);
+    let aviso = '';
+    if (c.confianza === 'baja') aviso = c.municipio === 'Madrid'
+      ? `Confianza baja: la red regional no tiene ninguna estación dentro de Madrid capital. La más cercana a este centro está en ${esc(c.estacion)}, a ${fmt(c.dkm)} km.`
+      : `Confianza baja: la estación más cercana está a ${fmt(c.dkm)} km.`;
+    else if (c.confianza === 'media') aviso = `Confianza media: la estación más cercana está a ${fmt(c.dkm)} km, en ${esc(c.estacion)}.`;
+    detalle.innerHTML = `
+      <article class="ficha">
+        <h2>${esc(c.nombre)}</h2>
+        <p class="donde">${esc(c.tipo)}, ${esc(c.municipio)}${c.distrito ? ' (' + esc(c.distrito) + ')' : ''}</p>
+        <div class="cifra"><b>${fmt(c.d27)}</b><span>días de clase al año con 27&nbsp;°C o más en la calle</span></div>
+        <div class="termo">
+          <div class="termo-escala"><span class="termo-marca" style="left:${c.percentil}%"></span></div>
+          <div class="termo-pie"><span>Más fresco</span><span>Más calor</span></div>
+          <p>Pasa más calor en horas de clase que el ${masQue}&nbsp;% de los centros públicos: está ${TRAMO_TXT[c.tramo - 1]}.</p>
+        </div>
+        <div class="cursos" aria-label="Días de calor por curso">
+          ${c.serie.map((v, j) => `<div><b>${v}</b><i style="height:${Math.round(v / max * 60)}px;background:${COLORES[c.tramo - 1]}"></i>${nombreCurso(datos.cursos[j])}</div>`).join('')}
+        </div>
+        <dl class="datos">
+          <dt>Horas de clase a ≥&nbsp;27&nbsp;°C</dt><dd>${fmt(c.h27)} al año</dd>
+          ${c.alumnos ? `<dt>Alumnos (estimados)</dt><dd>unos ${c.alumnos.toLocaleString('es-ES')}</dd>` : ''}
+          ${c.fundado && c.fundado > 1900 ? `<dt>Centro creado en</dt><dd>${c.fundado}</dd>` : ''}
+          <dt>Altitud</dt><dd>${c.alt} m</dd>
+        </dl>
+        ${aviso ? `<p class="aviso">${aviso}</p>` : ''}
+        <div class="acciones">
+          <button type="button" id="copiar">Copiar enlace a este centro</button>
+          <button type="button" id="cerrar">Ver todos</button>
+        </div>
+      </article>`;
+    document.getElementById('cerrar').addEventListener('click', () => {
+      actual = null; history.replaceState(null, '', location.pathname);
+      mapa.setFilter('elegido', ['==', ['get', 'id'], '']); resumen();
+    });
+    document.getElementById('copiar').addEventListener('click', async e => {
+      try { await navigator.clipboard.writeText(location.href); e.target.textContent = 'Enlace copiado'; }
+      catch { e.target.textContent = 'Copia la dirección del navegador'; }
+    });
+  }
+
+  // ---------- buscador
+  const input = document.getElementById('buscar');
+  const lista = document.getElementById('lista');
+  let opciones = [], sel = -1;
+  function pintar() {
+    const q = norm(input.value.trim());
+    if (q.length < 2) { lista.hidden = true; input.setAttribute('aria-expanded', 'false'); return; }
+    const partes = q.split(/\s+/);
+    opciones = centros.filter(c => partes.every(p => c.clave.includes(p))).slice(0, 12);
+    sel = opciones.length ? 0 : -1;
+    lista.innerHTML = opciones.length ? opciones.map((c, j) => `
+      <li role="option" id="op${j}" aria-selected="${j === sel}" data-id="${c.id}">
+        <span class="punto" style="background:${COLORES[c.tramo - 1]}"></span>
+        <span>${esc(c.nombre)}</span><small>${esc(c.tipo)}, ${esc(c.municipio)}</small>
+      </li>`).join('') : '<li class="vacio" role="option" aria-disabled="true">Ningún centro público coincide. Prueba con el municipio.</li>';
+    lista.hidden = false; input.setAttribute('aria-expanded', 'true');
+  }
+  function marcar(j) {
+    sel = j;
+    lista.querySelectorAll('[role=option]').forEach((li, k) => li.setAttribute('aria-selected', k === j));
+    const li = document.getElementById('op' + j);
+    if (li) { li.scrollIntoView({ block: 'nearest' }); input.setAttribute('aria-activedescendant', li.id); }
+  }
+  function aceptar(j) {
+    const c = opciones[j]; if (!c) return;
+    input.value = c.nombre; lista.hidden = true; input.setAttribute('aria-expanded', 'false');
+    elegir(c.id, true);
+  }
+  input.addEventListener('input', pintar);
+  input.addEventListener('keydown', e => {
+    if (lista.hidden) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); marcar(Math.min(sel + 1, opciones.length - 1)); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); marcar(Math.max(sel - 1, 0)); }
+    else if (e.key === 'Enter') { e.preventDefault(); aceptar(sel); }
+    else if (e.key === 'Escape') { lista.hidden = true; input.setAttribute('aria-expanded', 'false'); }
+  });
+  lista.addEventListener('mousedown', e => { const li = e.target.closest('[data-id]'); if (li) { e.preventDefault(); aceptar([...lista.children].indexOf(li)); } });
+  input.addEventListener('blur', () => setTimeout(() => { lista.hidden = true; input.setAttribute('aria-expanded', 'false'); }, 120));
+
+  // ---------- reproductor: el curso 2025/26 día a día
+  const play = document.getElementById('play'), fechaEl = document.getElementById('rep-fecha'),
+        cuentaEl = document.getElementById('rep-cuenta'), barra = document.getElementById('rep-barra'),
+        leyendaAcum = document.getElementById('rep-leyenda');
+  const fmtFecha = new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  let timer = null, dia = 0;
+  function frame(d) {
+    mapa.setPaintProperty('centros', 'circle-color', colorAcum(d));
+    const f = new Date(datos.dias[d] + 'T12:00:00');
+    fechaEl.textContent = fmtFecha.format(f);
+    const conCalor = centros.filter(c => c.acum[d] > (d ? c.acum[d - 1] : 0)).length;
+    const conAlguno = centros.filter(c => c.acum[d] > 0).length;
+    cuentaEl.textContent = actual
+      ? `${actual.nombre}: ${actual.acum[d]} ${actual.acum[d] === 1 ? 'día' : 'días'} de calor en lo que va de curso`
+      : conCalor
+        ? `Hoy, ${conCalor.toLocaleString('es-ES')} centros con ≥ 27 °C en clase`
+        : `${conAlguno.toLocaleString('es-ES')} centros llevan algún día de calor`;
+    barra.style.width = ((d + 1) / nd * 100) + '%';
+  }
+  function parar(final) {
+    clearInterval(timer); timer = null;
+    play.textContent = final ? 'Volver al mapa por tramos' : 'Seguir';
+    if (final) play.dataset.fin = '1';
+  }
+  play.addEventListener('click', () => {
+    if (play.dataset.fin) {
+      delete play.dataset.fin; dia = 0;
+      mapa.setPaintProperty('centros', 'circle-color', colorTramo);
+      fechaEl.textContent = 'Curso 2025/26'; cuentaEl.textContent = 'El mapa se calienta día a día de clase';
+      barra.style.width = '0'; play.textContent = 'Ver el curso 2025/26'; leyendaAcum.hidden = true;
+      return;
+    }
+    if (timer) { parar(false); return; }
+    if (dia === 0) mapa.fitBounds(REGION, { padding: 30, duration: reducido ? 0 : 900 });
+    mapa.setPaintProperty('centros', 'circle-color', colorAcum(dia));
+    leyendaAcum.hidden = false;
+    play.textContent = 'Pausa';
+    const paso = reducido ? 400 : 70;
+    timer = setInterval(() => {
+      frame(dia);
+      if (++dia >= nd) parar(true);
+    }, paso);
+  });
+
+  resumen();
+})();
+</script>
+</body>
+</html>

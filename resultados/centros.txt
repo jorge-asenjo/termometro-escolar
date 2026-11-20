@@ -1,0 +1,43 @@
+Estaciones: 28 · días lectivos: 947 · horas: 4735
+Altitud oficial de Majadahonda (28080003): 360 m; terreno: 725 m. Se usa la del terreno.
+Altitud oficial de San Martín de Valdeiglesias (28133002): 549 m; terreno: 720 m. Se usa la del terreno.
+Centros públicos en alta: 2100 · sin coordenadas válidas: 22
+Altitud de los centros: min 471.0 · máx 1218.0
+
+Validación dejando fuera cada estación (horas lectivas 2021/22-2025/26): RMSE 1.50 °C · mediana por estación 1.31 °C · sesgo +0.02 °C
+Estaciones con más error (°C): {'Rascafría': 3.06, 'Rivas Vaciamadrid': 2.32, 'Villarejo de Salvanés': 2.15, 'Aranjuez': 2.06, 'Collado-Villalba': 1.72}
+Alumnos de centros públicos 2024/25 en esas etapas: 673,988 · asignados a centros: 672,819
+
+Días lectivos con >= 27 °C (media 2021/22-2025/26) por tramo:
+       count   min   50%   max
+tramo                         
+1      416.0   2.8   8.8  10.6
+2      415.0   9.6  12.4  14.0
+3      416.0  12.8  14.4  16.0
+4      415.0  14.6  16.0  18.0
+5      416.0  16.6  19.4  23.4
+
+Por confianza: {'alta': 939, 'baja': 854, 'media': 285}
+
+Los 10 centros con más calor en horario de clase (grados-hora > 25 °C, media de 5 cursos):
+                 nombre                                       tipo         municipio  d27_media  gh25_media confianza
+La Cigarra y la Hormiga                           Escuela infantil Torrejón de Ardoz       22.0       301.0      alta
+        Luis de Gongora                                  Instituto Torrejón de Ardoz       22.0       301.0      alta
+      Rivas-Vaciamadrid                Escuela municipal de música Rivas-Vaciamadrid       23.0       300.0      alta
+             La Escuela             Colegio de infantil y primaria Rivas-Vaciamadrid       23.0       300.0      alta
+                Rayuela                           Escuela infantil Rivas-Vaciamadrid       23.2       299.0      alta
+          Joaquin Blume             Colegio de infantil y primaria Torrejón de Ardoz       22.0       298.0      alta
+            Las Lagunas                                  Instituto Rivas-Vaciamadrid       23.0       297.0      alta
+                Platero                           Escuela infantil Rivas-Vaciamadrid       23.0       296.0      alta
+              El Olivar Colegio de infantil, primaria y secundaria Rivas-Vaciamadrid       22.6       295.0      alta
+              El Parque             Colegio de infantil y primaria Rivas-Vaciamadrid       22.6       295.0      alta
+
+Los 5 con menos:
+              nombre                           tipo               municipio  d27_media  gh25_media
+         Bustarviejo                  Casa de niños             Bustarviejo        2.8        26.0
+          Montelindo Colegio de infantil y primaria             Bustarviejo        2.8        27.0
+     Enrique de Mesa Colegio de infantil y primaria               Rascafría        3.2        32.0
+Montejo de la Sierra                  Casa de niños    Montejo de la Sierra        4.2        34.0
+     Pablo Sorozabal    Escuela municipal de música Miraflores de la Sierra        3.6        34.0
+
+Alumnos estimados en centros del tramo 5: 153085
