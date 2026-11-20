@@ -10,6 +10,8 @@ Proyecto para [DATAMAD 2026](https://datos.comunidad.madrid), el hackathon de da
 
 El mapa es una hoja cuadriculada. Cada cuadro mide unos 2,5 km de lado y lleva el color del tramo de calor más frecuente entre sus centros; va rayado donde la confianza es baja. Al acercarte aparecen uno a uno los 2.078 centros públicos en alta con coordenadas. Puedes buscar tu centro, ver en qué tramo de calor está frente al resto y reproducir el curso 2025/26 día a día.
 
+Cada centro tiene su ficha: los días de calor al año, su tramo, los cinco cursos, el curso 2025/26 día a día y el aviso de confianza. Se puede enviar por WhatsApp, copiar su enlace o guardarla como imagen.
+
 ## El hallazgo
 
 Los días de colegio con 27 °C o más en la calle entre las 9 y las 14 h van de **4 al año en El Atazar a 23 en Fuenlabrada**. Son medias de los cursos 2021/22 a 2025/26. En el curso 2025/26, el más caluroso, fueron de 8 a 35 días.

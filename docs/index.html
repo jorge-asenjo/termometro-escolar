@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Termómetro Escolar</title>
 <meta name="description" content="Cuántos días de clase pasa cada centro público de la Comunidad de Madrid con 27 °C o más en la calle. Datos abiertos de la Comunidad de Madrid.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_ES">
+<meta property="og:title" content="Termómetro Escolar: ¿cuánto calor pasa tu cole en horas de clase?">
+<meta property="og:description" content="Busca tu centro público de la Comunidad de Madrid y mira cuántos días de clase al año pasa con 27 °C o más en la calle.">
+<meta property="og:url" content="https://jorge-asenjo.github.io/termometro-escolar/">
+<meta property="og:image" content="https://jorge-asenjo.github.io/termometro-escolar/captura.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 26'%3E%3Crect x='4' y='1' width='6' height='17' rx='3' fill='white' stroke='%2318222d' stroke-width='2'/%3E%3Ccircle cx='7' cy='20' r='5' fill='%23e2522b'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,48 +123,90 @@ h1 {
 .filtros label:has(input:checked) { background: var(--tinta); color: #fff; border-color: var(--tinta); }
 .filtros label:has(input:focus-visible) { outline: 3px solid var(--boli); outline-offset: 2px; }
 
-/* Ficha del centro */
+/* Ficha del centro: lleva el color de su tramo, igual que su punto en el mapa.
+   Con confianza baja el color va rayado y la marca hueca, como en el mapa. */
+.sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .ficha {
+  --tramo: var(--t3);
+  --relleno: var(--tramo);
   background: #fff;
   border: 2px solid var(--tinta);
   border-radius: 8px;
-  padding: 20px 20px 18px;
   box-shadow: 5px 5px 0 var(--tinta);
+  overflow: hidden;
 }
-.ficha h2 { font: 800 26px/1.05 var(--display); font-stretch: 82%; margin: 0; }
-.ficha .donde { color: var(--tinta-suave); margin: 4px 0 0; }
-.cifra { display: flex; align-items: flex-end; gap: 12px; margin: 18px 0 6px; }
+.ficha.baja { --relleno: repeating-linear-gradient(135deg, var(--tramo) 0 4px, color-mix(in srgb, var(--tramo) 30%, #fff) 4px 8px); }
+.ficha-banda { height: 20px; border-bottom: 2px solid var(--tinta); }
+.ficha-banda::before { content: ""; display: block; height: 100%; background: var(--relleno); transform-origin: left; }
+.ficha-cuerpo { padding: 16px 20px 20px; }
+.ficha h2 { font: 800 26px/1.05 var(--display); font-stretch: 82%; margin: 0; text-wrap: balance; overflow-wrap: anywhere; }
+.ficha .donde { color: var(--tinta-suave); margin: 4px 0 0; line-height: 1.35; }
+.cifra { display: flex; align-items: flex-end; gap: 12px; margin: 18px 0 0; }
 .cifra b {
-  font: 800 76px/.8 var(--display);
+  font: 800 88px/.8 var(--display);
   font-stretch: 75%;
   font-variant-numeric: tabular-nums;
 }
-.cifra span { line-height: 1.25; padding-bottom: 2px; }
-.termo { margin: 16px 0 4px; }
-.termo-escala {
-  position: relative; height: 14px; border-radius: 7px;
-  background: linear-gradient(90deg, var(--t1) 0 20%, var(--t2) 20% 40%, var(--t3) 40% 60%, var(--t4) 60% 80%, var(--t5) 80% 100%);
+.cifra > span:last-child { line-height: 1.25; padding-bottom: 2px; max-width: 16ch; }
+.veredicto { font: 800 22px/1.1 var(--display); font-stretch: 85%; margin: 20px 0 12px; }
+.escala { position: relative; }
+.escala-cuadros {
+  display: grid; grid-template-columns: repeat(5, 1fr); height: 22px;
+  border: 2px solid var(--tinta); border-radius: 5px; overflow: hidden;
 }
-.termo-marca {
-  position: absolute; top: -5px; width: 4px; height: 24px; margin-left: -2px;
-  background: var(--tinta); border-radius: 2px; box-shadow: 0 0 0 2px #fff;
+.escala-cuadros i + i { border-left: 1px solid rgba(24,34,45,.3); }
+.escala-marca {
+  position: absolute; top: 11px; left: calc(var(--p) * 1%); width: 26px; height: 26px; margin: -13px 0 0 -13px;
+  border-radius: 50%; background: var(--tramo); border: 3px solid var(--tinta); box-shadow: 0 0 0 2.5px #fff;
 }
-.termo-pie { display: flex; justify-content: space-between; font-size: 13px; color: var(--tinta-suave); margin-top: 4px; }
-.termo p { margin: 8px 0 0; }
-.cursos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; align-items: end; height: 92px; margin: 18px 0 4px; }
+.ficha.baja .escala-marca { background: #fff; box-shadow: inset 0 0 0 4px var(--tramo), 0 0 0 2.5px #fff; }
+.escala-pie { display: flex; justify-content: space-between; font-size: 13px; color: var(--tinta-suave); margin-top: 5px; }
+.frente { margin: 8px 0 0; }
+.aviso {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 14px 0 0; padding: 10px 12px; background: #fff7e0;
+  border: 1.5px solid var(--tinta); border-radius: 6px; font-size: 14px; line-height: 1.4;
+}
+.aviso i { flex: none; width: 16px; height: 16px; margin-top: 2px; border-radius: 2px; background: var(--relleno); box-shadow: inset 0 0 0 1px rgba(24,34,45,.45); }
+.bloque { margin-top: 18px; padding-top: 14px; border-top: 1px solid #c9d4de; }
+.bloque h3 { font: 700 15px/1.2 var(--texto); margin: 0 0 10px; }
+.cursos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; align-items: end; height: 100px; }
 .cursos div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 12px; color: var(--tinta-suave); }
-.cursos i { display: block; width: 100%; border-radius: 3px 3px 0 0; min-height: 2px; }
-.cursos b { font-size: 13px; color: var(--tinta); }
-.datos { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 16px 0 0; font-size: 15px; }
+.cursos i {
+  display: block; width: 100%; height: calc(var(--v) * 58px); min-height: 3px; margin-bottom: 3px;
+  background: var(--relleno); border: 1.5px solid var(--tinta); border-radius: 3px 3px 0 0; transform-origin: bottom;
+}
+.cursos b { font: 800 15px/1.3 var(--display); font-variant-numeric: tabular-nums; color: var(--tinta); }
+/* El curso 2025/26 en cuadros: una columna por semana, una fila por día de la semana */
+.dias, .meses { display: grid; column-gap: 1px; }
+.dias { grid-template-rows: repeat(5, auto); row-gap: 1px; }
+.dias i { aspect-ratio: 1; background: #e3eaf0; border-radius: 1px; }
+.dias i.c { background: var(--tramo); box-shadow: inset 0 0 0 1px rgba(24,34,45,.75); }
+.meses { font-size: 12px; line-height: 1; color: var(--tinta-suave); margin-top: 5px; }
+.meses span { grid-row: 1; white-space: nowrap; }
+.dias-pie { margin: 10px 0 0; font-size: 14px; line-height: 1.4; }
+.datos { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; margin: 0; font-size: 15px; }
 .datos dt { color: var(--tinta-suave); }
 .datos dd { margin: 0; }
-.aviso { margin: 14px 0 0; padding: 10px 12px; background: #fff7e0; border-left: 4px solid var(--t3); font-size: 14px; }
-.acciones { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.confianza-alta { margin: 10px 0 0; font-size: 15px; color: var(--tinta-suave); }
+.acciones { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.acciones > * { min-height: 44px; }
+.acciones .principal, .acciones .discreto { grid-column: 1 / -1; }
+.acciones .principal {
+  display: flex; align-items: center; justify-content: center;
+  font: 700 16px/1 var(--texto); text-decoration: none; text-align: center;
+  background: var(--tinta); color: #fff; border: 2px solid var(--tinta); border-radius: 6px; padding: 10px 14px; cursor: pointer;
+}
+.acciones .principal:hover { background: #2b3a4a; }
+.acciones .discreto { border-color: transparent; background: transparent; text-decoration: underline; text-underline-offset: 3px; font-weight: 400; }
+.acciones .discreto:hover { background: #e8eef8; }
 button {
   font: 700 15px/1 var(--texto); color: var(--tinta);
   background: #fff; border: 2px solid var(--tinta); border-radius: 6px; padding: 10px 14px; cursor: pointer;
 }
 button:hover { background: #e8eef8; }
+/* Con una ficha abierta, el titular deja el sitio a la ficha (sigue ahí para los lectores de pantalla) */
+.con-ficha .panel h1, .con-ficha .entrada { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Resumen cuando no hay centro elegido */
 .resumen h2 { font: 800 24px/1.1 var(--display); font-stretch: 82%; margin: 0 0 6px; }
@@ -243,7 +292,29 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   .reproductor button { width: 100%; }
   .mapa-leyenda { left: 10px; top: 10px; padding: 6px 8px; font-size: 12px; gap: 5px; }
   .mapa-leyenda i { width: 13px; height: 13px; }
-  .cifra b { font-size: 64px; }
+  .cifra b { font-size: 72px; }
+  /* con una ficha abierta, el mapa se encoge y la ficha queda justo debajo */
+  .con-ficha #mapa { height: 36vh; }
+  .con-ficha .mapa-zona:not(.curso) .reproductor { display: none; }
+  .con-ficha .panel { padding-top: 16px; }
+}
+/* Al abrir una ficha: se posa en el papel, la marca recorre la escala mientras sube la cifra,
+   crecen los cursos y los días de calor se van marcando en orden */
+@media (prefers-reduced-motion: no-preference) {
+  .ficha { animation: posar .36s cubic-bezier(.2, .9, .3, 1.15) both; }
+  .ficha-banda::before { animation: llenar .7s cubic-bezier(.2, .8, .2, 1) .1s backwards; }
+  .escala-marca { animation: recorrer .9s cubic-bezier(.2, .8, .2, 1) .2s backwards; }
+  .cursos i { animation: crecer .5s cubic-bezier(.2, .8, .2, 1) calc(.3s + var(--j) * 70ms) backwards; }
+  .cursos b { animation: asomar .3s ease-out calc(.55s + var(--j) * 70ms) backwards; }
+  .dias i.c { animation: marcar .3s ease-out calc(.5s + var(--n) * 26ms) backwards; }
+  .acciones button, .acciones .principal { transition: transform .08s ease-out; }
+  .acciones button:active, .acciones .principal:active { transform: translate(1px, 2px); }
+  @keyframes posar { from { opacity: 0; transform: translate(5px, 5px); box-shadow: 0 0 0 var(--tinta); } }
+  @keyframes llenar { from { transform: scaleX(0); } }
+  @keyframes recorrer { from { left: 0; } }
+  @keyframes crecer { from { transform: scaleY(0); } }
+  @keyframes asomar { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes marcar { from { background: #e3eaf0; box-shadow: inset 0 0 0 1px transparent; } 55% { transform: scale(1.7); } }
 }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; }
@@ -344,6 +415,14 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   });
   const porId = new Map(centros.map(c => [c.id, c]));
   const nombreCurso = k => `${String(k).slice(2)}/${String(k + 1).slice(2)}`;
+  // El curso 2025/26 en cuadros: cada día lectivo, en la columna de su semana y la fila de su día de la semana
+  const fechas = datos.dias.map(s => new Date(s + 'T00:00:00Z'));
+  const lunes = fechas[0] - ((fechas[0].getUTCDay() + 6) % 7) * 864e5;
+  const celdas = fechas.map(f => ({ col: Math.floor((f - lunes) / (7 * 864e5)) + 1, fila: (f.getUTCDay() + 6) % 7 + 1, mes: f.getUTCMonth() }));
+  const SEMANAS = celdas[nd - 1].col;
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const inicioMes = celdas.filter((ce, d) => !d || ce.mes !== celdas[d - 1].mes);
+  const huboCalor = (c, d) => c.acum[d] > (d ? c.acum[d - 1] : 0);
 
   // ---------- la hoja cuadriculada
   // A escala regional el mapa es una hoja de cuaderno con cuadros de unos 2,5 km de lado. Cada cuadro lleva el
@@ -579,16 +658,35 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   });
 
   // ---------- ficha
-  const detalle = document.getElementById('detalle');
+  const detalle = document.getElementById('detalle'), panel = document.getElementById('panel'), filtrosEl = document.getElementById('filtros');
+  const movil = matchMedia('(max-width: 860px)');
   let actual = null;
+
+  // En móvil la ficha va la primera del panel, justo debajo del mapa; en pantalla ancha, tras el buscador y los filtros
+  function colocar() {
+    const cambia = document.body.classList.contains('con-ficha') !== !!actual;
+    document.body.classList.toggle('con-ficha', !!actual);
+    if (actual && movil.matches) { if (panel.firstElementChild !== detalle) panel.prepend(detalle); }
+    else if (filtrosEl.nextElementSibling !== detalle) filtrosEl.after(detalle);
+    if (cambia) mapa.resize();
+  }
+  movil.addEventListener('change', colocar);
+  // Si el foco estaba dentro (en un botón que desaparece al repintar), pasa al título nuevo
+  function pintarDetalle(html) {
+    const dentro = detalle.contains(document.activeElement);
+    colocar();
+    detalle.innerHTML = html;
+    if (dentro) detalle.querySelector('h2').focus({ preventScroll: true });
+  }
+  detalle.addEventListener('keydown', e => { if (e.key === 'Escape' && actual) cerrar(); });
 
   function resumen() {
     const lista = centros.filter(c => grupo === 'todos' ? c.grupo !== 'otro' : c.grupo === grupo)
       .sort((a, b) => b.d27 - a.d27 || b.gh25 - a.gh25).slice(0, 8);
     const ds = centros.map(c => c.d27).sort((a, b) => a - b);
-    detalle.innerHTML = `
+    pintarDetalle(`
       <div class="resumen">
-        <h2>De ${Math.round(ds[0])} a ${Math.round(ds[ds.length - 1])} días de calor al año, según dónde esté el centro</h2>
+        <h2 tabindex="-1">De ${Math.round(ds[0])} a ${Math.round(ds[ds.length - 1])} días de calor al año, según dónde esté el centro</h2>
         <p>Cada cuadro del mapa mide unos 2,5 km de lado y lleva el color del tramo más frecuente entre sus centros públicos. Acércate para ver cada centro: el tamaño del punto son sus alumnos estimados.</p>
         <p>Estos son los que más días de calor pasan en horas de clase:</p>
         <ol class="ranking">${lista.map(c => `
@@ -597,8 +695,37 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
             <span class="dias">${fmt(c.d27)}</span>
           </button></li>`).join('')}
         </ol>
-      </div>`;
+      </div>`);
     detalle.querySelectorAll('[data-id]').forEach(b => b.addEventListener('click', () => elegir(b.dataset.id, true)));
+  }
+
+  const TRAMO_TITULO = ['Entre el 20&nbsp;% más fresco', 'En el tramo bajo', 'En el tramo medio', 'En el tramo alto', 'Entre el 20&nbsp;% con más calor'];
+  const sinNbsp = s => s.replace(/&nbsp;/g, ' ');
+  const dondeDe = c => `${c.tipo}, ${c.municipio}${c.distrito ? ' (' + c.distrito + ')' : ''}`;
+  function avisoDe(c) {
+    if (c.confianza === 'baja') return c.municipio === 'Madrid'
+      ? `Confianza baja: la red regional no tiene ninguna estación dentro de Madrid capital. La más cercana a este centro está en ${c.estacion}, a ${fmt(c.dkm)} km.`
+      : `Confianza baja: la estación más cercana está a ${fmt(c.dkm)} km.`;
+    if (c.confianza === 'media') return `Confianza media: la estación más cercana está a ${fmt(c.dkm)} km, en ${c.estacion}.`;
+    return '';
+  }
+  // Los días de calor del curso 2025/26, contados por meses
+  function diasDe(c) {
+    const total = c.acum[nd - 1], meses = new Map();
+    celdas.forEach((ce, d) => { if (huboCalor(c, d)) meses.set(ce.mes, (meses.get(ce.mes) || 0) + 1); });
+    if (!total) return 'Ningún día con 27 °C o más en este curso.';
+    const cabeza = `${total} ${total === 1 ? 'día' : 'días'} con 27 °C o más`;
+    const partes = [...meses].map(([mes, n]) => `${n} en ${MESES[mes]}`);
+    if (partes.length === 1) return `${cabeza}, en ${MESES[[...meses][0][0]]}.`;
+    return `${cabeza}: ${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}.`;
+  }
+  const textoPara = c => `${c.nombre} (${c.municipio}): ${fmt(c.d27)} días de clase al año con 27 °C o más en la calle. `
+    + `Frente al resto de centros públicos de la Comunidad de Madrid, está ${sinNbsp(TRAMO_TXT[c.tramo - 1])}.${avisoDe(c) ? ' ' + avisoDe(c) : ''}`;
+  const archivoDe = c => `termometro-escolar-${norm(c.nombre).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.png`;
+
+  function cerrar() {
+    actual = null; history.replaceState(null, '', location.pathname);
+    mapa.setFilter('elegido', ['==', ['get', 'id'], '']); resumen();
   }
 
   function elegir(id, volar) {
@@ -607,48 +734,258 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
     actual = c;
     history.replaceState(null, '', '#c=' + id);
     if (mapa.getLayer('elegido')) mapa.setFilter('elegido', ['==', ['get', 'id'], id]);
-    if (volar) mapa.flyTo({ center: [c.lon, c.lat], zoom: Math.max(mapa.getZoom(), 13), duration: reducido ? 0 : 1400 });
     const max = Math.max(...c.serie, 1);
-    const nombreGrupo = { cole: 'colegios', ies: 'institutos', infantil: 'escuelas infantiles', otro: 'centros' }[c.grupo];
     const masQue = Math.max(0, c.percentil - 1);
-    let aviso = '';
-    if (c.confianza === 'baja') aviso = c.municipio === 'Madrid'
-      ? `Confianza baja: la red regional no tiene ninguna estación dentro de Madrid capital. La más cercana a este centro está en ${esc(c.estacion)}, a ${fmt(c.dkm)} km.`
-      : `Confianza baja: la estación más cercana está a ${fmt(c.dkm)} km.`;
-    else if (c.confianza === 'media') aviso = `Confianza media: la estación más cercana está a ${fmt(c.dkm)} km, en ${esc(c.estacion)}.`;
-    detalle.innerHTML = `
-      <article class="ficha">
-        <h2>${esc(c.nombre)}</h2>
-        <p class="donde">${esc(c.tipo)}, ${esc(c.municipio)}${c.distrito ? ' (' + esc(c.distrito) + ')' : ''}</p>
-        <div class="cifra"><b>${fmt(c.d27)}</b><span>días de clase al año con 27&nbsp;°C o más en la calle</span></div>
-        <div class="termo">
-          <div class="termo-escala"><span class="termo-marca" style="left:${c.percentil}%"></span></div>
-          <div class="termo-pie"><span>Más fresco</span><span>Más calor</span></div>
-          <p>Pasa más calor en horas de clase que el ${masQue}&nbsp;% de los centros públicos: está ${TRAMO_TXT[c.tramo - 1]}.</p>
+    const aviso = avisoDe(c), corte = aviso.indexOf(':') + 1;
+    const nativo = navigator.share && matchMedia('(pointer: coarse)').matches;
+    let n = 0;
+    pintarDetalle(`
+      <article class="ficha${c.confianza === 'baja' ? ' baja' : ''}" style="--tramo:${COLORES[c.tramo - 1]}" aria-labelledby="ficha-nombre">
+        <div class="ficha-banda" aria-hidden="true"></div>
+        <div class="ficha-cuerpo">
+          <h2 id="ficha-nombre" tabindex="-1">${esc(c.nombre)}</h2>
+          <p class="donde">${esc(dondeDe(c))}</p>
+          <p class="cifra"><b id="cifra" aria-hidden="true">${fmt(c.d27)}</b><span class="sr">${fmt(c.d27)}</span> <span>días de clase al año con 27&nbsp;°C o más en la calle</span></p>
+          <p class="veredicto">${TRAMO_TITULO[c.tramo - 1]}</p>
+          <div class="escala" aria-hidden="true">
+            <div class="escala-cuadros">${COLORES.map(k => `<i style="background:${k}"></i>`).join('')}</div>
+            <span class="escala-marca" style="--p:${c.percentil}"></span>
+            <div class="escala-pie"><span>Más fresco</span><span>Más calor</span></div>
+          </div>
+          <p class="frente">Pasa más calor en horas de clase que el ${masQue}&nbsp;% de los centros públicos.</p>
+          ${aviso ? `<p class="aviso">${c.confianza === 'baja' ? '<i aria-hidden="true"></i>' : ''}<span><strong>${aviso.slice(0, corte)}</strong>${esc(aviso.slice(corte))}</span></p>` : ''}
+          <section class="bloque">
+            <h3>Días de calor en cada curso</h3>
+            <div class="cursos" role="img" aria-label="${c.serie.map((v, j) => `Curso ${nombreCurso(datos.cursos[j])}: ${v}`).join('. ')}.">
+              ${c.serie.map((v, j) => `<div style="--j:${j}"><b>${v}</b><i style="--v:${(v / max).toFixed(3)}"></i>${nombreCurso(datos.cursos[j])}</div>`).join('')}
+            </div>
+          </section>
+          <section class="bloque">
+            <h3>El curso 2025/26, día a día</h3>
+            <div class="dias" aria-hidden="true" style="grid-template-columns:repeat(${SEMANAS},minmax(0,1fr))">
+              ${celdas.map((ce, d) => `<i style="grid-area:${ce.fila}/${ce.col}${huboCalor(c, d) ? `;--n:${n++}" class="c` : ''}"></i>`).join('')}
+            </div>
+            <div class="meses" aria-hidden="true" style="grid-template-columns:repeat(${SEMANAS},minmax(0,1fr))">
+              ${inicioMes.map(ce => `<span style="grid-column:${ce.col}">${MESES[ce.mes].slice(0, 3)}</span>`).join('')}
+            </div>
+            <p class="dias-pie">${diasDe(c)} Cada cuadro es un día de clase.</p>
+          </section>
+          <section class="bloque">
+            <dl class="datos">
+              <dt>Horas de clase a ≥&nbsp;27&nbsp;°C</dt><dd>${fmt(c.h27)} al año</dd>
+              ${c.alumnos ? `<dt>Alumnos (estimados)</dt><dd>unos ${c.alumnos.toLocaleString('es-ES')}</dd>` : ''}
+              ${c.fundado && c.fundado > 1900 ? `<dt>Centro creado en</dt><dd>${c.fundado}</dd>` : ''}
+              <dt>Altitud</dt><dd>${c.alt} m</dd>
+            </dl>
+            ${aviso ? '' : `<p class="confianza-alta">Confianza alta: la estación más cercana está a ${fmt(c.dkm)} km, en ${esc(c.estacion)}.</p>`}
+          </section>
+          <div class="acciones">
+            ${nativo
+              ? '<button type="button" class="principal" id="compartir">Compartir</button>'
+              : `<a class="principal" href="https://wa.me/?text=${encodeURIComponent(textoPara(c) + '\n' + location.href)}" target="_blank" rel="noopener">Enviar por WhatsApp</a>`}
+            <button type="button" id="guardar">Guardar imagen</button>
+            <button type="button" id="copiar">Copiar enlace</button>
+            <button type="button" class="discreto" id="cerrar">Ver todos</button>
+          </div>
+          <p class="sr" role="status" id="ficha-estado"></p>
         </div>
-        <div class="cursos" aria-label="Días de calor por curso">
-          ${c.serie.map((v, j) => `<div><b>${v}</b><i style="height:${Math.round(v / max * 60)}px;background:${COLORES[c.tramo - 1]}"></i>${nombreCurso(datos.cursos[j])}</div>`).join('')}
-        </div>
-        <dl class="datos">
-          <dt>Horas de clase a ≥&nbsp;27&nbsp;°C</dt><dd>${fmt(c.h27)} al año</dd>
-          ${c.alumnos ? `<dt>Alumnos (estimados)</dt><dd>unos ${c.alumnos.toLocaleString('es-ES')}</dd>` : ''}
-          ${c.fundado && c.fundado > 1900 ? `<dt>Centro creado en</dt><dd>${c.fundado}</dd>` : ''}
-          <dt>Altitud</dt><dd>${c.alt} m</dd>
-        </dl>
-        ${aviso ? `<p class="aviso">${aviso}</p>` : ''}
-        <div class="acciones">
-          <button type="button" id="copiar">Copiar enlace a este centro</button>
-          <button type="button" id="cerrar">Ver todos</button>
-        </div>
-      </article>`;
-    document.getElementById('cerrar').addEventListener('click', () => {
-      actual = null; history.replaceState(null, '', location.pathname);
-      mapa.setFilter('elegido', ['==', ['get', 'id'], '']); resumen();
+      </article>`);
+
+    if (volar) mapa.flyTo({ center: [c.lon, c.lat], zoom: Math.max(mapa.getZoom(), 13), duration: reducido ? 0 : 1400 });
+    else if (movil.matches) mapa.easeTo({ center: [c.lon, c.lat], duration: reducido ? 0 : 600 });
+    (movil.matches ? window : panel).scrollTo({ top: 0, behavior: reducido ? 'auto' : 'smooth' });
+
+    // la cifra sube mientras la marca recorre la escala
+    if (!reducido) {
+      const el = document.getElementById('cifra'), t0 = performance.now();
+      el.style.minWidth = el.offsetWidth + 'px';
+      el.textContent = '0';
+      (function paso(t) {
+        if (!el.isConnected) return;
+        const k = Math.min(1, Math.max(0, (t - t0 - 200) / 900));
+        el.textContent = k < 1 ? Math.round(c.d27 * (1 - Math.pow(1 - k, 3))) : fmt(c.d27);
+        if (k < 1) requestAnimationFrame(paso);
+      })(t0);
+    }
+
+    const estado = document.getElementById('ficha-estado');
+    const decir = (boton, texto) => { boton.textContent = texto; estado.textContent = texto; };
+    const copiar = async boton => {
+      try { await navigator.clipboard.writeText(location.href); decir(boton, 'Enlace copiado'); }
+      catch { decir(boton, 'Copia la dirección del navegador'); }
+    };
+    document.getElementById('cerrar').addEventListener('click', cerrar);
+    document.getElementById('copiar').addEventListener('click', e => copiar(e.currentTarget));
+    document.getElementById('guardar').addEventListener('click', async e => {
+      const boton = e.currentTarget, png = await imagen(c).catch(() => null);
+      if (!png) { decir(boton, 'No se ha podido crear la imagen'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(png); a.download = archivoDe(c); a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      decir(boton, 'Imagen guardada');
     });
-    document.getElementById('copiar').addEventListener('click', async e => {
-      try { await navigator.clipboard.writeText(location.href); e.target.textContent = 'Enlace copiado'; }
-      catch { e.target.textContent = 'Copia la dirección del navegador'; }
-    });
+    const compartir = document.getElementById('compartir');
+    if (compartir) {
+      // la imagen se prepara antes, para que compartir responda al toque sin esperas
+      setTimeout(() => { if (actual === c) imagen(c).catch(() => null); }, 1600);
+      compartir.addEventListener('click', async () => {
+        const envio = { title: `${c.nombre}: calor en horas de clase`, text: textoPara(c), url: location.href };
+        const png = await imagen(c).catch(() => null);
+        const archivo = png && new File([png], archivoDe(c), { type: 'image/png' });
+        if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) envio.files = [archivo];
+        try { await navigator.share(envio); }
+        catch (err) { if (err.name !== 'AbortError') copiar(compartir); }
+      });
+    }
+  }
+
+  // ---------- la ficha como imagen, para guardarla o enviarla
+  let imagenHecha = null;
+  function imagen(c) {
+    if (!imagenHecha || imagenHecha.id !== c.id) imagenHecha = { id: c.id, png: dibujarImagen(c) };
+    return imagenHecha.png;
+  }
+  async function dibujarImagen(c) {
+    const DISPLAY = '"Bricolage Grotesque", system-ui, sans-serif', TEXTO = '"Atkinson Hyperlegible", system-ui, sans-serif';
+    const TINTA = '#18222d', SUAVE = '#556575';
+    await Promise.all([`800 condensed 80px ${DISPLAY}`, `800 semi-condensed 56px ${DISPLAY}`, `700 semi-condensed 30px ${DISPLAY}`, `400 30px ${TEXTO}`, `700 30px ${TEXTO}`]
+      .map(f => document.fonts.load(f))).catch(() => {});
+    const A = 1080, M = 48, SOMBRA = 14, X = M + 56, W = A - 2 * M - SOMBRA - 112;
+    const color = COLORES[c.tramo - 1], baja = c.confianza === 'baja';
+    const lz = document.createElement('canvas'); lz.width = A; lz.height = 100;
+    const g = lz.getContext('2d');
+    const partir = (texto, ancho) => {
+      const lineas = []; let l = '';
+      for (const p of texto.split(' ')) {
+        const prueba = l ? l + ' ' + p : p;
+        if (l && g.measureText(prueba).width > ancho) { lineas.push(l); l = p; } else l = prueba;
+      }
+      if (l) lineas.push(l);
+      return lineas;
+    };
+    // escribe un párrafo desde y (borde superior) y devuelve dónde acaba
+    const parrafo = (texto, y, fuente, tinta, interlinea, ancho = W, x = X) => {
+      g.font = fuente; g.fillStyle = tinta;
+      for (const l of partir(texto, ancho)) { g.fillText(l, x, y); y += interlinea; }
+      return y;
+    };
+    // el color del tramo; rayado si la confianza es baja, como los cuadros del mapa
+    const relleno = (x, y, w, h) => {
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      g.fillStyle = g.strokeStyle = color;
+      if (!baja) g.fillRect(x, y, w, h);
+      else {
+        g.globalAlpha = .3; g.fillRect(x, y, w, h); g.globalAlpha = 1; g.lineWidth = 9; g.beginPath();
+        for (let k = x - h; k < x + w + h; k += 24) { g.moveTo(k + h + 9, y - 9); g.lineTo(k - 9, y + h + 9); }
+        g.stroke();
+      }
+      g.restore();
+    };
+    const pintar = alto => {
+      g.textBaseline = 'top';
+      // papel cuadriculado y tarjeta con su sombra
+      g.fillStyle = '#f3f6f8'; g.fillRect(0, 0, A, alto);
+      g.strokeStyle = '#dfe7ee'; g.lineWidth = 2; g.beginPath();
+      for (let k = 27; k < A; k += 54) { g.moveTo(k, 0); g.lineTo(k, alto); }
+      for (let k = 27; k < alto; k += 54) { g.moveTo(0, k); g.lineTo(A, k); }
+      g.stroke();
+      const cw = A - 2 * M - SOMBRA, ch = alto - 2 * M - SOMBRA;
+      const caja = d => { g.beginPath(); g.roundRect(M + d, M + d, cw, ch, 20); };
+      g.fillStyle = TINTA; caja(SOMBRA); g.fill();
+      g.fillStyle = '#fff'; caja(0); g.fill();
+      g.save(); caja(0); g.clip(); relleno(M, M, cw, 56); g.fillStyle = TINTA; g.fillRect(M, M + 56, cw, 5); g.restore();
+      g.strokeStyle = TINTA; g.lineWidth = 5; caja(0); g.stroke();
+
+      // marca
+      let y = M + 61 + 40;
+      const e = 1.7;
+      g.strokeStyle = SUAVE; g.lineWidth = 2 * e; g.beginPath(); g.roundRect(X + 4 * e, y + e, 6 * e, 17 * e, 3 * e); g.stroke();
+      g.fillStyle = '#e2522b'; g.beginPath(); g.arc(X + 7 * e, y + 20 * e, 5 * e, 0, 7); g.fill(); g.fillRect(X + 6 * e, y + 8 * e, 2 * e, 10 * e);
+      g.font = `700 semi-condensed 30px ${DISPLAY}`; g.fillStyle = SUAVE; g.fillText('Termómetro Escolar', X + 38, y + 8);
+      y += 80;
+
+      // nombre, cifra y tramo
+      g.font = `800 condensed 80px ${DISPLAY}`;
+      const tam = partir(c.nombre, W).length > 2 ? 58 : 80;
+      y = parrafo(c.nombre, y, `800 condensed ${tam}px ${DISPLAY}`, TINTA, tam * 1.04) + 8;
+      y = parrafo(dondeDe(c), y, `400 34px ${TEXTO}`, SUAVE, 44) + 40;
+      const cifra = fmt(c.d27);
+      g.font = `800 condensed 280px ${DISPLAY}`; g.fillStyle = TINTA; g.textBaseline = 'alphabetic';
+      g.fillText(cifra, X - 6, y + 200);
+      const anchoCifra = g.measureText(cifra).width;
+      g.textBaseline = 'top'; g.font = `400 38px ${TEXTO}`;
+      const lema = partir('días de clase al año con 27 °C o más en la calle', W - anchoCifra - 30);
+      lema.forEach((l, j) => g.fillText(l, X + anchoCifra + 24, y + 200 - (lema.length - j) * 48 + 12));
+      y += 200 + 52;
+      y = parrafo(sinNbsp(TRAMO_TITULO[c.tramo - 1]), y, `800 semi-condensed 56px ${DISPLAY}`, TINTA, 60) + 24;
+
+      // escala de tramos con la marca del centro
+      const he = 56, ex = X + W * c.percentil / 100, ey = y + he / 2;
+      g.save(); g.beginPath(); g.roundRect(X, y, W, he, 12); g.clip();
+      COLORES.forEach((k, j) => { g.fillStyle = k; g.fillRect(X + j * W / 5, y, W / 5 + 1, he); });
+      g.strokeStyle = 'rgba(24,34,45,.3)'; g.lineWidth = 2; g.beginPath();
+      for (let j = 1; j < 5; j++) { g.moveTo(X + j * W / 5, y); g.lineTo(X + j * W / 5, y + he); }
+      g.stroke(); g.restore();
+      g.strokeStyle = TINTA; g.lineWidth = 5; g.beginPath(); g.roundRect(X, y, W, he, 12); g.stroke();
+      g.fillStyle = '#fff'; g.beginPath(); g.arc(ex, ey, 41, 0, 7); g.fill();
+      g.fillStyle = baja ? '#fff' : color; g.beginPath(); g.arc(ex, ey, 32, 0, 7); g.fill();
+      g.strokeStyle = TINTA; g.lineWidth = 7; g.stroke();
+      if (baja) { g.strokeStyle = color; g.lineWidth = 10; g.beginPath(); g.arc(ex, ey, 23.5, 0, 7); g.stroke(); }
+      y += he + 16;
+      g.font = `400 26px ${TEXTO}`; g.fillStyle = SUAVE; g.fillText('Más fresco', X, y);
+      g.textAlign = 'right'; g.fillText('Más calor', X + W, y); g.textAlign = 'left';
+      y += 26 + 26;
+      y = parrafo(`Pasa más calor en horas de clase que el ${Math.max(0, c.percentil - 1)} % de los centros públicos de la Comunidad de Madrid.`, y, `400 34px ${TEXTO}`, TINTA, 46) + 26;
+
+      // confianza
+      const aviso = avisoDe(c);
+      if (aviso) {
+        const corte = aviso.indexOf(':') + 1, cabeza = aviso.slice(0, corte);
+        g.font = `400 30px ${TEXTO}`;
+        const lineas = partir(aviso, W - 70), ha = lineas.length * 42 + 40;
+        g.fillStyle = '#fff7e0'; g.beginPath(); g.roundRect(X, y, W, ha, 12); g.fill();
+        g.strokeStyle = TINTA; g.lineWidth = 3; g.stroke();
+        g.fillStyle = TINTA;
+        lineas.forEach((l, j) => {
+          let x = X + 28;
+          if (!j && l.startsWith(cabeza)) {
+            g.font = `700 30px ${TEXTO}`; g.fillText(cabeza, x, y + 24);
+            x += g.measureText(cabeza).width; l = l.slice(corte); g.font = `400 30px ${TEXTO}`;
+          }
+          g.fillText(l, x, y + 24 + j * 42);
+        });
+        y += ha + 36;
+      } else y = parrafo(`Confianza alta: la estación más cercana está a ${fmt(c.dkm)} km, en ${c.estacion}.`, y, `400 30px ${TEXTO}`, SUAVE, 42) + 30;
+
+      // el curso 2025/26 en cuadros
+      g.font = `700 30px ${TEXTO}`; g.fillStyle = TINTA; g.fillText('El curso 2025/26, día a día', X, y);
+      y += 52;
+      const paso = W / SEMANAS, lado = paso - 3;
+      celdas.forEach((ce, d) => {
+        const x = X + (ce.col - 1) * paso, yy = y + (ce.fila - 1) * paso, calor = huboCalor(c, d);
+        g.fillStyle = calor ? color : '#e3eaf0'; g.fillRect(x, yy, lado, lado);
+        if (calor) { g.strokeStyle = 'rgba(24,34,45,.6)'; g.lineWidth = 2; g.strokeRect(x + 1, yy + 1, lado - 2, lado - 2); }
+      });
+      y += 5 * paso + 8;
+      g.font = `400 24px ${TEXTO}`; g.fillStyle = SUAVE;
+      for (const ce of inicioMes) g.fillText(MESES[ce.mes].slice(0, 3), X + (ce.col - 1) * paso, y);
+      y += 24 + 22;
+      y = parrafo(diasDe(c), y, `400 30px ${TEXTO}`, TINTA, 42) + 8;
+      if (c.alumnos) y = parrafo(`Alumnos: unos ${c.alumnos.toLocaleString('es-ES')} (estimación).`, y, `400 30px ${TEXTO}`, TINTA, 42) + 8;
+
+      // pie
+      y += 22;
+      g.fillStyle = '#c9d4de'; g.fillRect(X, y, W, 2);
+      y += 26;
+      y = parrafo('Media de los cursos 2021/22 a 2025/26. Temperatura en la calle de 9 a 14 h los días de clase, no dentro del aula. Datos abiertos de la Comunidad de Madrid.', y, `400 26px ${TEXTO}`, SUAVE, 36) + 12;
+      g.font = `700 30px ${TEXTO}`; g.fillStyle = '#2346a8';
+      g.fillText((location.host + location.pathname).replace(/\/(index\.html)?$/, ''), X, y);
+      return y + 30 + 48 + M + SOMBRA;
+    };
+    const alto = Math.ceil(pintar(100));
+    lz.height = alto;
+    pintar(alto);
+    return new Promise((hecho, fallo) => lz.toBlob(b => b ? hecho(b) : fallo(new Error('sin imagen')), 'image/png'));
   }
 
   // ---------- buscador
