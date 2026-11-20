@@ -268,8 +268,20 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
 .rep-texto { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .rep-fecha { font: 800 22px/1 var(--display); font-stretch: 80%; font-variant-numeric: tabular-nums; }
 .rep-cuenta { font-size: 14px; color: #c9d4de; }
-.rep-barra { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: #33414f; overflow: hidden; }
-.rep-barra i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--t3), var(--t5)); }
+/* El curso por estaciones: cada tramo mide los días de clase que tiene. Cada día es una raya, más alta cuantos
+   más centros pasan calor; al pasar, la base se llena del color de la estación y las rayas, del de su calor */
+.rep-curso { grid-column: 1 / -1; display: grid; gap: 5px 3px; margin-top: 2px; }
+.rep-est { display: flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap;
+  font-size: 12px; color: #7f90a1; transition: color .3s ease-out; }
+.rep-est svg { flex: none; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.rep-est.pasada { color: #c9d4de; }
+.rep-est.activa { color: var(--c); font-weight: 700; }
+.rep-pista { display: block; width: 100%; height: 26px; border-radius: 3px; }
+.rep-pista .fondo { fill: var(--c); opacity: .13; transition: opacity .3s ease-out; }
+.rep-pista.activa .fondo { opacity: .26; }
+.rep-pista .base { fill: var(--c); }
+.rep-pista .apagado { fill: #56677a; }
+.rep-pista .cabeza { fill: #fff; }
 .rep-leyenda { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; font-size: 12px; color: #c9d4de; }
 .rep-leyenda[hidden] { display: none; }
 .rep-leyenda i { flex: 1; height: 8px; border-radius: 4px;
@@ -407,6 +419,9 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
   .apunte path { stroke-dasharray: 1 1.5; stroke-dashoffset: 1.25; }   /* el hueco de más evita un punto suelto antes de trazarse */
   .apunte.puesto path { stroke-dashoffset: 0; transition: stroke-dashoffset .42s cubic-bezier(.4, 0, .2, 1) .2s; }
   .apunte.puesto path + path { transition-duration: .16s; transition-delay: .6s; }
+  /* al entrar en una estación, su icono brota */
+  .rep-est.activa svg { animation: brotar .45s cubic-bezier(.2, .9, .3, 1.5); }
+  @keyframes brotar { from { transform: scale(.4) rotate(-35deg); opacity: 0; } }
   @keyframes posar { from { opacity: 0; transform: translate(5px, 5px); box-shadow: 0 0 0 var(--tinta); } }
   @keyframes llenar { from { transform: scaleX(0); } }
   @keyframes recorrer { from { left: 0; } }
@@ -479,7 +494,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
       <span class="rep-fecha" id="rep-fecha">Curso 2025/26</span>
       <span class="rep-cuenta" id="rep-cuenta">El mapa se calienta día a día de clase</span>
     </div>
-    <div class="rep-barra" aria-hidden="true"><i id="rep-barra"></i></div>
+    <div class="rep-curso" id="rep-curso" aria-hidden="true"></div>
     <div class="rep-leyenda" id="rep-leyenda" hidden><span>Días de calor acumulados</span><span>0</span><i></i><span>36</span></div>
   </div>
 </div>
@@ -1146,26 +1161,102 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
 
   // ---------- reproductor: el curso 2025/26 día a día
   const play = document.getElementById('play'), fechaEl = document.getElementById('rep-fecha'),
-        cuentaEl = document.getElementById('rep-cuenta'), barra = document.getElementById('rep-barra'),
-        leyendaAcum = document.getElementById('rep-leyenda');
+        cuentaEl = document.getElementById('rep-cuenta'), leyendaAcum = document.getElementById('rep-leyenda');
   const fmtFecha = new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
   let timer = null, dia = 0;
+  // Cuántos centros pasan calor cada día
+  const calorDia = Array.from({ length: nd }, (_, d) => centros.reduce((n, c) => n + (c.acum[d] > (d ? c.acum[d - 1] : 0)), 0));
+  const fraccion = calorDia.map(n => n / centros.length);
+  // Los días sin calor pasan deprisa y los de calor, despacio. Frena un poco antes de que llegue el calor
+  const pausa = d => {
+    const f = Math.max(fraccion[d], .6 * (fraccion[d + 1] || 0), .3 * (fraccion[d + 2] || 0));
+    return (reducido ? 3 : 1) * (18 + 112 * Math.sqrt(f));
+  };
+
+  // Las estaciones del curso, con el cambio astronómico (el curso empieza y acaba en verano)
+  const NS = 'http://www.w3.org/2000/svg';
+  const ESTACIONES = [
+    { desde: '', nombre: 'Verano', color: '#f5c84a',
+      icono: '<circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/>' },
+    { desde: '2025-09-22', nombre: 'Otoño', color: '#e8904f',
+      icono: '<path d="M3 13C3 7.5 7 3 13.5 2.5 13 9 8.5 13 3 13Z"/><path d="M2 14l7-7"/>' },
+    { desde: '2025-12-21', nombre: 'Invierno', color: '#9fcfe6',
+      icono: '<path d="M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5M6.4 2.6 8 4l1.6-1.4M6.4 13.4 8 12l1.6 1.4"/>' },
+    { desde: '2026-03-20', nombre: 'Primavera', color: '#93d48a',
+      icono: '<circle cx="8" cy="4.4" r="2.4"/><circle cx="11.6" cy="8" r="2.4"/><circle cx="8" cy="11.6" r="2.4"/><circle cx="4.4" cy="8" r="2.4"/><circle cx="8" cy="8" r=".6"/>' },
+    { desde: '2026-06-21', nombre: 'Verano', color: '#f5c84a', icono: '' },
+  ];
+  ESTACIONES[4].icono = ESTACIONES[0].icono;
+  const tramos = [];
+  datos.dias.forEach((s, d) => {
+    const e = ESTACIONES.findLastIndex(x => x.desde <= s);
+    const ultimo = tramos[tramos.length - 1];
+    if (ultimo && ultimo.e === e) ultimo.n++; else tramos.push({ e, desde: d, n: 1 });
+  });
+  const pistaEl = document.getElementById('rep-curso');
+  pistaEl.style.gridTemplateColumns = tramos.map(t => t.n + 'fr').join(' ');
+  const colorRaya = f => f < .2 ? COLORES[1] : f < .6 ? COLORES[2] : COLORES[3];
+  tramos.forEach((t, k) => {
+    const e = ESTACIONES[t.e];
+    t.etiqueta = document.createElement('div');
+    t.etiqueta.className = 'rep-est'; t.etiqueta.style.setProperty('--c', e.color);
+    // en el tramo estrecho (los días de verano de septiembre) solo cabe el icono
+    t.etiqueta.innerHTML = `<svg viewBox="0 0 16 16">${e.icono}</svg>` + (t.n / nd < .15 ? '' : `<span>${e.nombre}</span>`);
+    t.etiqueta.style.gridRow = 1; t.etiqueta.style.gridColumn = k + 1;
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('class', 'rep-pista'); svg.setAttribute('viewBox', `0 0 ${t.n} 20`); svg.setAttribute('preserveAspectRatio', 'none');
+    svg.style.setProperty('--c', e.color); svg.style.gridRow = 2; svg.style.gridColumn = k + 1;
+    let apagado = '', encendido = '';
+    for (let i = 0; i < t.n; i++) {
+      const f = fraccion[t.desde + i];
+      if (!f) continue;
+      const h = (2.5 + 15.5 * Math.sqrt(f)).toFixed(2), y = (18 - h).toFixed(2);
+      apagado += `<rect x="${i + .18}" y="${y}" width=".64" height="${h}"/>`;
+      encendido += `<rect x="${i + .18}" y="${y}" width=".64" height="${h}" fill="${colorRaya(f)}"/>`;
+    }
+    svg.innerHTML = `<defs><clipPath id="rep-clip-${k}"><rect width="0" height="20"/></clipPath></defs>
+      <rect class="fondo" width="${t.n}" height="20"/>
+      <g class="apagado">${apagado}<rect y="18" width="${t.n}" height="2" opacity=".45"/></g>
+      <g clip-path="url(#rep-clip-${k})">${encendido}<rect class="base" y="18" width="${t.n}" height="2"/></g>
+      <rect class="cabeza" y="0" width=".3" height="20" opacity="0"/>`;
+    t.clip = svg.querySelector('clipPath rect'); t.cabeza = svg.querySelector('.cabeza'); t.pista = svg;
+    pistaEl.append(t.etiqueta, svg);
+  });
+  // d = -1: el curso sin empezar
+  function pintarPista(d) {
+    for (const t of tramos) {
+      const hecho = Math.max(0, Math.min(t.n, d + 1 - t.desde)), activa = hecho > 0 && d < t.desde + t.n && d + 1 < nd;
+      t.clip.setAttribute('width', hecho);
+      t.cabeza.setAttribute('x', Math.min(hecho, t.n - .3));
+      t.cabeza.setAttribute('opacity', activa ? .9 : 0);
+      t.etiqueta.classList.toggle('activa', activa);
+      t.etiqueta.classList.toggle('pasada', hecho === t.n && !activa);
+      t.pista.classList.toggle('activa', activa);
+    }
+  }
+
   function frame(d) {
     colorPuntos(colorAcum(d));
     diaPintado = d; dibujar();
     const f = new Date(datos.dias[d] + 'T12:00:00');
     fechaEl.textContent = fmtFecha.format(f);
-    const conCalor = centros.filter(c => c.acum[d] > (d ? c.acum[d - 1] : 0)).length;
+    const conCalor = calorDia[d];
     const conAlguno = centros.filter(c => c.acum[d] > 0).length;
     cuentaEl.textContent = actual
       ? `${actual.nombre}: ${actual.acum[d]} ${actual.acum[d] === 1 ? 'día' : 'días'} de calor en lo que va de curso`
       : conCalor
         ? `Hoy, ${conCalor.toLocaleString('es-ES')} centros con ≥ 27 °C en clase`
         : `${conAlguno.toLocaleString('es-ES')} centros llevan algún día de calor`;
-    barra.style.width = ((d + 1) / nd * 100) + '%';
+    pintarPista(d);
+  }
+  function avanzar() {
+    frame(dia);
+    const espera = pausa(dia);
+    if (++dia >= nd) { parar(true); return; }
+    timer = setTimeout(avanzar, espera);
   }
   function parar(final) {
-    clearInterval(timer); timer = null;
+    clearTimeout(timer); timer = null;
     play.textContent = final ? 'Volver al mapa por tramos' : 'Seguir';
     if (final) play.dataset.fin = '1';
   }
@@ -1175,7 +1266,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
       colorPuntos(colorTramo);
       diaPintado = null; dibujar(); zona.classList.remove('curso');
       fechaEl.textContent = 'Curso 2025/26'; cuentaEl.textContent = 'El mapa se calienta día a día de clase';
-      barra.style.width = '0'; play.textContent = 'Ver el curso 2025/26'; leyendaAcum.hidden = true;
+      pintarPista(-1); play.textContent = 'Ver el curso 2025/26'; leyendaAcum.hidden = true;
       return;
     }
     if (timer) { parar(false); return; }
@@ -1184,11 +1275,7 @@ i.hueco { border-radius: 50%; border: 4.5px solid var(--t4); background: #fff; }
     diaPintado = dia; dibujar(); zona.classList.add('curso');
     leyendaAcum.hidden = false;
     play.textContent = 'Pausa';
-    const paso = reducido ? 400 : 70;
-    timer = setInterval(() => {
-      frame(dia);
-      if (++dia >= nd) parar(true);
-    }, paso);
+    timer = setTimeout(avanzar, pausa(dia));
   });
 
   // ---------- la entrada
